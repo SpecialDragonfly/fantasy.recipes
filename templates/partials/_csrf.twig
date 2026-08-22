@@ -1,0 +1,10 @@
+{# Slim\Csrf\Guard (see src/middleware.php) sets two request attributes per
+   request: `csrf_name` (the dynamic per-token field name, e.g. "csrf6a7...")
+   and `csrf_value` (the masked token). On submit, Guard::process() reads them
+   back from the POST body under the *literal* keys "csrf_name"/"csrf_value"
+   (Guard::getTokenNameKey()/getTokenValueKey()) -- it does NOT look for a
+   field dynamically named after the csrf_name value. So this must render two
+   hidden inputs with fixed names, not one input dynamically named after
+   csrf_name -- see vendor/slim/csrf/src/Guard.php::process(). #}
+<input type="hidden" name="csrf_name" value="{{ request.getAttribute('csrf_name') }}">
+<input type="hidden" name="csrf_value" value="{{ request.getAttribute('csrf_value') }}">

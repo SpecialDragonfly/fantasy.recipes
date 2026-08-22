@@ -1,0 +1,163 @@
+{% extends 'layout.twig' %}
+
+{% block title %}Edit {{ recipe.title }} &mdash; fantasy.recipes{% endblock %}
+
+{% block content %}
+    <p><a href="{{ backUrl }}">&larr; Back to recipes</a></p>
+
+    <section class="panel">
+        <h1>{{ recipe.title }}</h1>
+        <p>
+            {% if recipe.status == 'published' %}
+                <strong>Published</strong> &mdash;
+                <form method="post" action="/admin/recipes/{{ recipe.id }}/unpublish" class="inline-form">
+                    {% include 'partials/_csrf.twig' %}
+                    <button type="submit" class="link-button">Unpublish</button>
+                </form>
+            {% else %}
+                Draft &mdash;
+                <form method="post" action="/admin/recipes/{{ recipe.id }}/publish" class="inline-form">
+                    {% include 'partials/_csrf.twig' %}
+                    <button type="submit" class="link-button">Publish</button>
+                </form>
+            {% endif %}
+            {% if recipe.status == 'published' %}&mdash; <a href="/recipes/{{ recipe.slug }}">View live page</a>{% endif %}
+        </p>
+        {% if recipe.origin %}<p><small>Origin: {{ recipe.origin }}</small></p>{% endif %}
+    </section>
+
+    <section class="auth-form">
+        <h2>Recipe details</h2>
+        <form method="post" action="/admin/recipes/{{ recipe.id }}">
+            {% include 'partials/_csrf.twig' %}
+
+            <label for="slug">Slug</label>
+            <input type="text" id="slug" name="slug" value="{{ recipe.slug }}"
+                   required pattern="[a-z0-9]+(-[a-z0-9]+)*">
+
+            <label for="title">Title</label>
+            <input type="text" id="title" name="title" value="{{ recipe.title }}"
+                   required maxlength="255">
+
+            <label>
+                <input type="checkbox" name="published" value="1" {% if recipe.status == 'published' %}checked{% endif %}>
+                Published
+            </label>
+
+            <button type="submit">Save details</button>
+        </form>
+    </section>
+
+    <section class="auth-form">
+        <h2>Ingredients &amp; Instructions <small>(the mundane truth)</small></h2>
+        <form method="post" action="/admin/recipes/{{ recipe.id }}/original">
+            {% include 'partials/_csrf.twig' %}
+
+            <label for="original_ingredients">Ingredients</label>
+            <textarea id="original_ingredients" name="original_ingredients" rows="8">{{ recipe.original_ingredients }}</textarea>
+
+            <label for="original_instructions">Instructions</label>
+            <textarea id="original_instructions" name="original_instructions" rows="8">{{ recipe.original_instructions }}</textarea>
+
+            <button type="submit">Save</button>
+        </form>
+    </section>
+
+    <section class="auth-form">
+        <h2>Narrator recipe <small>(the ritual-styled version)</small></h2>
+        <form method="post" action="/admin/recipes/{{ recipe.id }}/narrator-recipe">
+            {% include 'partials/_csrf.twig' %}
+
+            <label for="narrator">Narrator</label>
+            <input type="text" id="narrator" name="narrator" value="{{ recipe.narrator|default('') }}"
+                   maxlength="255" placeholder="e.g. A dragon, A witch">
+
+            <label for="narrator_recipe">Narrator recipe</label>
+            <textarea id="narrator_recipe" name="narrator_recipe" rows="8">{{ recipe.narrator_recipe|default('') }}</textarea>
+
+            <button type="submit">Save</button>
+        </form>
+    </section>
+
+    <section class="auth-form">
+        <h2>
+            Story
+            {% if story %}<small>told by {{ story.narrator }}</small>{% else %}<small>none yet</small>{% endif %}
+        </h2>
+        <form method="post" action="/admin/recipes/{{ recipe.id }}/story">
+            {% include 'partials/_csrf.twig' %}
+
+            <label for="story_narrator">Narrator</label>
+            <input type="text" id="story_narrator" name="narrator" value="{{ story.narrator|default('') }}"
+                   required maxlength="255" placeholder="e.g. A dragon, A witch">
+
+            <label for="story_body">Story</label>
+            <textarea id="story_body" name="body" rows="10">{{ story.body|default('') }}</textarea>
+
+            <button type="submit">{{ story ? 'Save Story' : 'Create Story' }}</button>
+        </form>
+
+        {% if archivedStories|length %}
+            <details>
+                <summary>Past versions ({{ archivedStories|length }})</summary>
+                <ul>
+                    {% for archived in archivedStories %}
+                        <li>
+                            <strong>{{ archived.narrator }}</strong> &mdash; archived {{ archived.archived_at }}
+                            <div class="story-body">{{ archived.body|nl2br }}</div>
+                        </li>
+                    {% endfor %}
+                </ul>
+            </details>
+        {% endif %}
+    </section>
+
+    <section class="auth-form">
+        <h2>Tags</h2>
+        <form method="post" action="/admin/recipes/{{ recipe.id }}/tags">
+            {% include 'partials/_csrf.twig' %}
+            {% set recipeTagIds = recipeTags|map(t => t.id) %}
+            {#
+                The checkboxes below are the real, no-JS form state --
+                site.js's tag-picker enhancement (search "Admin: recipe tags
+                pill picker") hides this list and replaces it with a pill
+                multi-select that toggles these same checkboxes, so the
+                surrounding <form> and its POST /admin/recipes/{id}/tags
+                handler don't need to know or care whether JS ran. With JS
+                disabled this renders and submits exactly as before.
+            #}
+            <div class="tag-picker" data-create-url="/admin/tags">
+                <div class="tag-picker-options">
+                    {% for tag in allTags %}
+                        <label class="tag-option">
+                            <input type="checkbox" name="tag_ids[]" value="{{ tag.id }}"
+                                   {% if tag.id in recipeTagIds %}checked{% endif %}>
+                            {{ tag.name }}
+                        </label>
+                    {% endfor %}
+                </div>
+                {% if allTags|length == 0 %}
+                    <p class="tag-picker-empty">No tags exist yet. <a href="/admin/tags">Create some</a>,
+                        or just start typing below.</p>
+                {% endif %}
+            </div>
+            {#
+                Hidden by the JS enhancement (which saves on every pill
+                add/remove instead -- see site.js), so this only shows, and
+                is only needed, when JS is off.
+            #}
+            <button type="submit" class="tag-picker-save">Save tags</button>
+            <p class="tag-picker-status" aria-live="polite"></p>
+        </form>
+    </section>
+
+    <section class="auth-form">
+        <h2>Danger zone</h2>
+        <p>Permanently deletes this recipe, its Story (including past versions), and tags. This cannot be undone.</p>
+        <form method="post" action="/admin/recipes/{{ recipe.id }}/delete"
+              onsubmit="return confirm('Delete &quot;{{ recipe.title|e('js') }}&quot;? This removes its Story and tags too. This cannot be undone.');">
+            {% include 'partials/_csrf.twig' %}
+            <button type="submit" class="button button-danger">Delete recipe</button>
+        </form>
+    </section>
+{% endblock %}

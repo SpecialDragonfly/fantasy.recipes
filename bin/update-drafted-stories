@@ -1,0 +1,74 @@
+#!/usr/bin/env php
+<?php
+
+declare(strict_types=1);
+
+/**
+ * Companion to bin/insert-drafted-stories, for re-drafting Stories that
+ * already exist. Reads a JSON array of {recipe_id, narrator, body} from
+ * stdin and, for each entry, overwrites the existing live Story's body via
+ * StoryRepository::update() -- but only if a live Story already exists for
+ * that recipe_id, its narrator matches, and the recipe is still status =
+ * 'draft' (never touches a Story on an already-published recipe -- that's
+ * what StoryRepository::replace() + admin review is for). Entries with no
+ * matching draft are skipped, same idempotent/resumable spirit as
+ * insert-drafted-stories.
+ *
+ * Usage: php bin/update-drafted-stories < batch.json
+ */
+
+use App\Repository\RecipeRepository;
+use App\Repository\StoryRepository;
+
+require __DIR__ . '/../vendor/autoload.php';
+$container = require __DIR__ . '/../src/bootstrap.php';
+
+/** @var RecipeRepository $recipes */
+$recipes = $container->get(RecipeRepository::class);
+/** @var StoryRepository $stories */
+$stories = $container->get(StoryRepository::class);
+
+$input = stream_get_contents(STDIN);
+if ($input === false || trim($input) === '') {
+    fwrite(STDERR, "No input on stdin.\n");
+    exit(1);
+}
+
+/** @var list<array{recipe_id: int, narrator: string, body: string}>|null $batch */
+$batch = json_decode($input, true);
+if (!is_array($batch)) {
+    fwrite(STDERR, "Invalid JSON.\n");
+    exit(1);
+}
+
+$updated = 0;
+$skipped = 0;
+
+foreach ($batch as $entry) {
+    $recipeId = (int) $entry['recipe_id'];
+    $narrator = trim((string) $entry['narrator']);
+    $body = trim((string) $entry['body']);
+
+    if ($narrator === '' || $body === '') {
+        fwrite(STDERR, "Skipping recipe_id {$recipeId} -- empty narrator or body.\n");
+        $skipped++;
+        continue;
+    }
+
+    $recipe = $recipes->findById($recipeId);
+    if ($recipe === null || $recipe['status'] !== 'draft' || $recipe['story_id'] === null) {
+        $skipped++;
+        continue;
+    }
+
+    $existing = $stories->findById($recipe['story_id']);
+    if ($existing === null || $existing['narrator'] !== $narrator) {
+        $skipped++;
+        continue;
+    }
+
+    $stories->update($existing['id'], $narrator, $body);
+    $updated++;
+}
+
+echo "Updated {$updated}, skipped {$skipped}.\n";

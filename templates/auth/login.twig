@@ -1,0 +1,31 @@
+{% extends 'layout.twig' %}
+
+{% block title %}Login &mdash; fantasy.recipes{% endblock %}
+
+{% block content %}
+    <section class="auth-form">
+        <h1>Login</h1>
+        {% if errors is defined and errors|length %}
+            <ul class="form-errors">
+                {% for error in errors %}<li>{{ error }}</li>{% endfor %}
+            </ul>
+        {% endif %}
+        <form method="post" action="/login{{ next ? '?next=' ~ next|url_encode : '' }}">
+            {% include 'partials/_csrf.twig' %}
+
+            <label for="identifier">Username or email</label>
+            <input type="text" id="identifier" name="identifier" value="{{ old.identifier|default('') }}"
+                   required autocomplete="username">
+
+            <label for="password">Password</label>
+            <input type="password" id="password" name="password" required autocomplete="current-password">
+
+            <button type="submit">Login</button>
+        </form>
+        <p>
+            <a href="/password-reset">Forgot your password?</a>
+            &middot;
+            No account? <a href="/register">Register</a>.
+        </p>
+    </section>
+{% endblock %}

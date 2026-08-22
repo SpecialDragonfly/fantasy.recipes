@@ -1,0 +1,9 @@
+.content-container {
+    min-height: 100vh;
+    display: flex;
+    flex-direction: column;
+}
+
+footer.site-footer {
+    margin-top: auto;
+}

@@ -1,0 +1,19 @@
+#!/usr/bin/env php
+<?php
+
+declare(strict_types=1);
+
+use App\Console\ImportRecipeCommand;
+use App\Console\NormalizeTemperaturesCommand;
+use App\Console\TranslateDraftCommand;
+use Symfony\Component\Console\Application;
+
+require __DIR__ . '/../vendor/autoload.php';
+
+$container = require __DIR__ . '/../src/bootstrap.php';
+
+$application = new Application('fantasy.recipes', 'dev');
+$application->add($container->get(ImportRecipeCommand::class));
+$application->add($container->get(TranslateDraftCommand::class));
+$application->add($container->get(NormalizeTemperaturesCommand::class));
+$application->run();

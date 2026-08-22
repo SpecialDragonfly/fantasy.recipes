@@ -1,0 +1,17 @@
+{% extends 'layout.twig' %}
+
+{% block title %}Tags &mdash; fantasy.recipes{% endblock %}
+
+{% block content %}
+    <h1>Tags</h1>
+
+    {% if tags|length %}
+        <ul class="tag-index-list">
+            {% for tag in tags %}
+                <li><a href="/recipes?tag={{ tag.id }}">{{ tag.name }}</a></li>
+            {% endfor %}
+        </ul>
+    {% else %}
+        <p class="panel">No tags yet.</p>
+    {% endif %}
+{% endblock %}

@@ -1,0 +1,66 @@
+#!/usr/bin/env php
+<?php
+
+declare(strict_types=1);
+
+/**
+ * One-off helper for the manual "I am the AI" Concierge-story drafting
+ * pass (no CLAUDE_API_KEY is configured, so recipe:translate-draft's
+ * Claude-API pattern can't run for real here). Reads a JSON array of
+ * {recipe_id, narrator, body} from stdin and inserts each via
+ * StoryRepository::create(), skipping any recipe_id that already has a
+ * live Story (idempotent/resumable, same spirit as every other batch job
+ * in this codebase).
+ *
+ * Usage: php bin/insert-drafted-stories < batch.json
+ */
+
+use App\Repository\RecipeRepository;
+use App\Repository\StoryRepository;
+
+require __DIR__ . '/../vendor/autoload.php';
+$container = require __DIR__ . '/../src/bootstrap.php';
+
+/** @var RecipeRepository $recipes */
+$recipes = $container->get(RecipeRepository::class);
+/** @var StoryRepository $stories */
+$stories = $container->get(StoryRepository::class);
+
+$input = stream_get_contents(STDIN);
+if ($input === false || trim($input) === '') {
+    fwrite(STDERR, "No input on stdin.\n");
+    exit(1);
+}
+
+/** @var list<array{recipe_id: int, narrator: string, body: string}>|null $batch */
+$batch = json_decode($input, true);
+if (!is_array($batch)) {
+    fwrite(STDERR, "Invalid JSON.\n");
+    exit(1);
+}
+
+$created = 0;
+$skipped = 0;
+
+foreach ($batch as $entry) {
+    $recipeId = (int) $entry['recipe_id'];
+    $narrator = trim((string) $entry['narrator']);
+    $body = trim((string) $entry['body']);
+
+    if ($narrator === '' || $body === '') {
+        fwrite(STDERR, "Skipping recipe_id {$recipeId} -- empty narrator or body.\n");
+        $skipped++;
+        continue;
+    }
+
+    $recipe = $recipes->findById($recipeId);
+    if ($recipe === null || $recipe['story_id'] !== null) {
+        $skipped++;
+        continue;
+    }
+
+    $stories->create($recipeId, $narrator, $body, null);
+    $created++;
+}
+
+echo "Created {$created}, skipped {$skipped}.\n";

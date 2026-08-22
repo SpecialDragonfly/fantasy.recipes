@@ -1,0 +1,27 @@
+{% extends 'layout.twig' %}
+
+{% block title %}Your Grimoire &mdash; fantasy.recipes{% endblock %}
+
+{% block content %}
+    <section class="panel">
+        <h1>Your Grimoire</h1>
+        {% if entries|length %}
+            <ul class="grimoire-list">
+                {% for entry in entries %}
+                    <li class="grimoire-entry">
+                        <a href="/recipes/{{ entry.recipe_slug }}">{{ entry.title }}</a>
+                        <form method="post" action="/grimoire/{{ entry.recipe_id }}/remove" class="inline-form">
+                            {% include 'partials/_csrf.twig' %}
+                            <button type="submit" class="link-button">Remove</button>
+                        </form>
+                    </li>
+                {% endfor %}
+            </ul>
+        {% else %}
+            <p>
+                Your Grimoire is empty. Wander the <a href="/recipes">recipes</a> and bookmark the ones
+                that call to you -- recipes I want to try, nothing more.
+            </p>
+        {% endif %}
+    </section>
+{% endblock %}

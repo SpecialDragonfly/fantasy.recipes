@@ -1,0 +1,37 @@
+{% extends 'layout.twig' %}
+
+{% block title %}Recipes &mdash; fantasy.recipes{% endblock %}
+
+{% block content %}
+    <h1>{{ activeTag ? 'Tagged: ' ~ activeTag.name : 'Recipes' }}</h1>
+
+    {% if activeTag %}
+        <p><a href="/recipes">&larr; All recipes</a></p>
+    {% endif %}
+
+    {% if tags|length %}
+        <p class="tag-filter-list">
+            {% for tag in tags %}
+                <a href="/recipes?tag={{ tag.id }}"{{ activeTag and activeTag.id == tag.id ? ' class="active"' : '' }}>{{ tag.name }}</a>{% if not loop.last %} &middot; {% endif %}
+            {% endfor %}
+        </p>
+    {% endif %}
+
+    {% if recipes|length %}
+        <div class="recipe-grid">
+            {% for recipe in recipes %}
+                <article class="panel recipe-card">
+                    <h2><a href="/recipes/{{ recipe.slug }}">{{ recipe.title }}</a></h2>
+                </article>
+            {% endfor %}
+        </div>
+    {% else %}
+        <p class="panel">No recipes here yet.</p>
+    {% endif %}
+
+    <p class="pagination">
+        {% if hasPrev %}<a href="/recipes?page={{ page - 1 }}{{ activeTag ? '&tag=' ~ activeTag.id : '' }}">&larr; Previous</a>{% endif %}
+        {% if hasPrev and hasNext %} &middot; {% endif %}
+        {% if hasNext %}<a href="/recipes?page={{ page + 1 }}{{ activeTag ? '&tag=' ~ activeTag.id : '' }}">Next &rarr;</a>{% endif %}
+    </p>
+{% endblock %}

@@ -1,0 +1,9 @@
+.git
+vendor
+storage/uploads/*
+storage/cache/*
+storage/testing.sqlite
+.env
+.env.testing
+tests
+*.md

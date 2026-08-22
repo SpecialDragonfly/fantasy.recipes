@@ -1,0 +1,37 @@
+{% extends 'layout.twig' %}
+
+{% block title %}Import a recipe &mdash; fantasy.recipes{% endblock %}
+
+{% block content %}
+    <section class="auth-form">
+        <h1>Import a recipe</h1>
+        <p><small>Paste a recipe page's URL. It's fetched, its structured recipe data extracted, and it lands here
+            as a draft ready to rewrite, tag, and translate. Confirmed working with <strong>BBC Good
+            Food</strong>, <strong>HelloFresh</strong>, and <strong>Riverford</strong> &mdash; most other sites
+            that embed the same schema.org recipe data work too. One recipe at a time, never the whole site.</small></p>
+
+        {% if error is defined %}
+            <ul class="form-errors">
+                <li>{{ error }}</li>
+            </ul>
+        {% endif %}
+
+        <form method="post" action="/admin/recipes/import">
+            {% include 'partials/_csrf.twig' %}
+
+            <label for="url">Recipe URL</label>
+            <input type="url" id="url" name="url" value="{{ old.url|default('') }}" required
+                   placeholder="https://www.bbcgoodfood.com/recipes/...">
+
+            <label>
+                <input type="checkbox" name="force" value="1" {% if old.force|default(false) %}checked{% endif %}>
+                Import again even if this URL has already been imported
+            </label>
+
+            <button type="submit">Import</button>
+        </form>
+
+        <p><small>No source URL at all? Use <a href="/admin/recipes/new">manual entry</a> instead. This can also
+            be run from the server as <code>php bin/console recipe:import &lt;url&gt;</code>.</small></p>
+    </section>
+{% endblock %}

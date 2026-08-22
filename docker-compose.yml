@@ -1,0 +1,36 @@
+services:
+  app:
+    build:
+      context: .
+      dockerfile: docker/php/Dockerfile
+    volumes:
+      - ./:/app:delegated
+      - uploads:/app/storage/uploads
+    env_file:
+      - .env
+    extra_hosts:
+      # MySQL runs on the host, outside Docker (see architecture.md --
+      # Deployment & Networking). Linux Docker Engine doesn't resolve
+      # host.docker.internal by default, so it's added explicitly here.
+      - "host.docker.internal:host-gateway"
+    expose:
+      - "9000"
+    restart: unless-stopped
+
+  web:
+    image: nginx:alpine
+    depends_on:
+      - app
+    volumes:
+      - ./public:/app/public:ro
+      - uploads:/app/storage/uploads:ro
+      - ./docker/nginx/default.conf:/etc/nginx/conf.d/default.conf:ro
+    ports:
+      # Bound to localhost only -- the host's existing nginx reverse proxy
+      # forwards recipes.notquitehuman.co.uk here; this container never
+      # faces the internet directly. TLS terminates upstream.
+      - "127.0.0.1:8080:80"
+    restart: unless-stopped
+
+volumes:
+  uploads:

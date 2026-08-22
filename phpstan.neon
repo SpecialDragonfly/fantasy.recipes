@@ -1,0 +1,9 @@
+parameters:
+    level: 8
+    paths:
+        - public
+        - src
+        - db/migrations
+        - tests
+    excludePaths:
+        - vendor/*

@@ -1,0 +1,52 @@
+{% extends 'layout.twig' %}
+
+{% block title %}{{ recipe.title }} &mdash; fantasy.recipes{% endblock %}
+
+{% block head_extra %}
+    {% if recipeJsonLd %}
+        {# Already-serialized JSON, not HTML -- see App\Http\RecipeJsonLd's
+           docblock for why |raw is correct here rather than a bug. #}
+        <script type="application/ld+json">{{ recipeJsonLd|raw }}</script>
+    {% endif %}
+{% endblock %}
+
+{% block content %}
+    <div class="ad-slot ad-leaderboard">Advertisement</div>
+
+    <div class="recipe-with-ads">
+        <aside class="ad-slot ad-skyscraper">Advertisement</aside>
+
+        <article>
+            <h1>{{ recipe.title }}</h1>
+
+            {% if tags|length %}
+                <p class="recipe-tags">
+                    {% for tag in tags %}
+                        <a href="/recipes?tag={{ tag.id }}">{{ tag.name }}</a>{% if not loop.last %} &middot; {% endif %}
+                    {% endfor %}
+                </p>
+            {% endif %}
+
+            {% if story %}
+                <section class="panel">
+                    <p class="story-narrator"><em>Told by {{ story.narrator }}</em></p>
+                    <div class="story-body">{{ story.body|nl2br }}</div>
+                </section>
+            {% endif %}
+
+            <section class="panel">
+                <div class="instruction-text">{{ recipe.narrator_recipe|default('This ritual has not yet been translated.')|nl2br }}</div>
+            </section>
+
+            <details class="mundane-truth">
+                <summary>Reveal the mundane truth</summary>
+                <section class="panel">
+                    <div class="instruction-text">{{ recipe.original_ingredients|nl2br }}</div>
+                    <div class="instruction-text">{{ recipe.original_instructions|nl2br }}</div>
+                </section>
+            </details>
+        </article>
+
+        <aside class="ad-slot ad-skyscraper ad-skyscraper-editable">Editable space</aside>
+    </div>
+{% endblock %}

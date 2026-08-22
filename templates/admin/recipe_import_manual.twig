@@ -1,0 +1,71 @@
+{% extends 'layout.twig' %}
+
+{% block title %}Manual import &mdash; fantasy.recipes{% endblock %}
+
+{% block content %}
+    <section class="auth-form">
+        <h1>Manual import</h1>
+        <p><small>Automated import couldn't pull this recipe in on its own{% if sourceUrl %} (see the error
+            above){% endif %} &mdash; copy the ingredients and instructions across by hand from the source page on
+            the right.</small></p>
+
+        {% if errors is defined and errors|length %}
+            <ul class="form-errors">
+                {% for error in errors %}<li>{{ error }}</li>{% endfor %}
+            </ul>
+        {% endif %}
+
+        <div class="import-manual-columns">
+            <div class="import-manual-fields">
+                <form method="post" action="/admin/recipes">
+                    {% include 'partials/_csrf.twig' %}
+                    <input type="hidden" name="form" value="manual_import">
+
+                    <label for="slug">Slug</label>
+                    <input type="text" id="slug" name="slug" value="{{ old.slug|default('') }}"
+                           required pattern="[a-z0-9]+(-[a-z0-9]+)*" placeholder="dragons-breath-stew">
+
+                    <label for="title">Title</label>
+                    <input type="text" id="title" name="title" value="{{ old.title|default('') }}"
+                           required maxlength="255" placeholder="Dragon's Breath Stew">
+
+                    <label for="origin">Origin</label>
+                    <input type="text" id="origin" name="origin" value="{{ old.origin|default('') }}" maxlength="512">
+
+                    <label for="original_ingredients">Ingredients</label>
+                    <textarea id="original_ingredients" name="original_ingredients"
+                              rows="8">{{ old.original_ingredients|default('') }}</textarea>
+
+                    <label for="original_instructions">Instructions <small>(in your own words, never copied
+                        verbatim from the source)</small></label>
+                    <textarea id="original_instructions" name="original_instructions"
+                              rows="10">{{ old.original_instructions|default('') }}</textarea>
+
+                    <label>
+                        <input type="checkbox" name="published" value="1" {% if old.published|default(false) %}checked{% endif %}>
+                        Published
+                    </label>
+
+                    <button type="submit">Create</button>
+                </form>
+            </div>
+
+            <div class="import-manual-preview">
+                {% if sourceUrl %}
+                    <p>
+                        <a href="{{ sourceUrl }}" target="_blank" rel="noopener noreferrer">Open source page in a
+                            new tab &#8599;</a>
+                    </p>
+                    <iframe src="{{ sourceUrl }}" title="Source recipe page" loading="lazy"
+                            referrerpolicy="no-referrer"></iframe>
+                    <p><small>Some sites (BBC Good Food and Riverford among them) refuse to display inside another
+                        page and this panel will stay blank &mdash; use the "open in a new tab" link above
+                        instead.</small></p>
+                {% else %}
+                    <p><small>No source URL given, so there's nothing to preview here &mdash; paste the recipe in
+                        from wherever it came from.</small></p>
+                {% endif %}
+            </div>
+        </div>
+    </section>
+{% endblock %}

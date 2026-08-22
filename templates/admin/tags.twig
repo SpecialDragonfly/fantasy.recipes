@@ -1,0 +1,38 @@
+{% extends 'layout.twig' %}
+
+{% block title %}Admin: Tags &mdash; fantasy.recipes{% endblock %}
+
+{% block content %}
+    <section class="panel">
+        <h1>Tags</h1>
+        {% if tags|length %}
+            <ul>
+                {% for tag in tags %}
+                    <li>
+                        <form method="post" action="/admin/tags/{{ tag.id }}" class="inline-form">
+                            {% include 'partials/_csrf.twig' %}
+                            <input type="text" name="name" value="{{ tag.name }}" required maxlength="64" class="tag-name-input">
+                            <button type="submit" class="link-button">Rename</button>
+                        </form>
+                        <form method="post" action="/admin/tags/{{ tag.id }}/delete" class="inline-form">
+                            {% include 'partials/_csrf.twig' %}
+                            <button type="submit" class="link-button">Delete</button>
+                        </form>
+                    </li>
+                {% endfor %}
+            </ul>
+        {% else %}
+            <p>No tags yet.</p>
+        {% endif %}
+    </section>
+
+    <section class="auth-form">
+        <h2>New tag</h2>
+        <form method="post" action="/admin/tags">
+            {% include 'partials/_csrf.twig' %}
+            <label for="name">Name</label>
+            <input type="text" id="name" name="name" required maxlength="64" placeholder="e.g. Dessert, Love potion">
+            <button type="submit">Create</button>
+        </form>
+    </section>
+{% endblock %}

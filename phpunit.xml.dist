@@ -1,0 +1,27 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<phpunit xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
+         xsi:noNamespaceSchemaLocation="vendor/phpunit/phpunit/phpunit.xsd"
+         bootstrap="vendor/autoload.php"
+         colors="true"
+         failOnWarning="true"
+         failOnDeprecation="true">
+    <testsuites>
+        <!-- Fast, no external dependencies: runs against SQLite where a
+             database is needed at all. RecipeSearch is stubbed rather than
+             exercised for real (see architecture.md). -->
+        <testsuite name="Unit">
+            <directory>tests/Unit</directory>
+        </testsuite>
+        <!-- Requires a real MySQL instance: covers MysqlFulltextSearch and
+             anything else genuinely MySQL-specific. Not run as part of the
+             default fast suite. -->
+        <testsuite name="Integration">
+            <directory>tests/Integration</directory>
+        </testsuite>
+    </testsuites>
+    <source>
+        <include>
+            <directory>src</directory>
+        </include>
+    </source>
+</phpunit>

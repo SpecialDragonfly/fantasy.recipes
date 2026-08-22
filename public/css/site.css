@@ -1,0 +1,906 @@
+/* fantasy.recipes -- tavern theme.
+ *
+ * Two fully-realized material worlds (spec.md -- Visual Design), not one
+ * theme dimmed into the other:
+ *   - Light: wood-effect paneling (dark exposed timber) + parchment/plaster.
+ *   - Dark: stone and slate walls, chalk-on-slate lettering.
+ *
+ * The texture/legibility split is load-bearing: --frame-texture (a layered
+ * wood-grain or stone-block gradient) is only ever used on the site's frame
+ * -- header, footer, nav, card borders -- via .frame. Anything holding actual
+ * body copy (recipe text, story text, form content, the hero blurb) sits on
+ * .panel/.text-panel instead: a flat, high-contrast parchment-and-ink or
+ * slate-and-chalk surface with just enough mottling to read as material, not
+ * as texture. .hero and .auth-form (used by the templates that exist today)
+ * are themselves styled as panels below, so that pattern is already proven
+ * out ahead of the recipe-detail templates that will lean on it hardest.
+ *
+ * No web fonts / CDN (Pi target, offline-capable) -- serif system-font
+ * stacks throughout, chosen for an old-book/carved-signage feel over the
+ * default Georgia-everywhere placeholder.
+ */
+
+:root {
+    color-scheme: light dark;
+
+    --font-heading: 'Iowan Old Style', 'Palatino Linotype', Palatino, Optima, 'Book Antiqua', Georgia, serif;
+    --font-body: Georgia, Cambria, 'Times New Roman', Times, serif;
+
+    /* ---- Light: timber frame + parchment ---- */
+    --bg: #e9dcc3;
+    --text: #2a2014;
+
+    --frame-text: #f1e3c0;
+    --frame-border: #7a5636;
+    --frame-texture:
+        repeating-linear-gradient(90deg, rgba(0, 0, 0, 0.16) 0px, rgba(0, 0, 0, 0.16) 2px, transparent 2px, transparent 9px),
+        repeating-linear-gradient(90deg, rgba(255, 255, 255, 0.03) 0px, rgba(255, 255, 255, 0.03) 1px, transparent 1px, transparent 4px),
+        linear-gradient(180deg, #55381f 0%, #3c2614 60%, #2c1b0f 100%);
+
+    --panel-bg: #fbf1da;
+    --panel-text: #2a2014;
+    --panel-border: #d9c49a;
+    --panel-texture:
+        radial-gradient(ellipse at 18% 15%, rgba(122, 86, 40, 0.06), transparent 55%),
+        radial-gradient(ellipse at 82% 75%, rgba(122, 86, 40, 0.05), transparent 55%),
+        var(--panel-bg);
+    --panel-shadow: inset 0 0 0 1px rgba(122, 86, 40, 0.12), 0 2px 10px rgba(44, 27, 15, 0.18);
+
+    --accent: #9c5a1e;
+    --accent-strong: #7a3b1e;
+    --accent-text: #fff7e8;
+    --link: #7a3b1e;
+
+    --error: #7a1f1f;
+    --error-bg: #f6ded9;
+    --success: #2f5d34;
+    --success-bg: #e2efdc;
+    --info: #24476b;
+    --info-bg: #e0ebf6;
+
+    --vignette: radial-gradient(ellipse 60% 35% at 50% -10%, rgba(255, 189, 110, 0.10), transparent 60%);
+}
+
+@media (prefers-color-scheme: dark) {
+    :root:not([data-theme="light"]) {
+        --bg: #202126;
+        --text: #e7e2d3;
+
+        --frame-text: #e7e2d3;
+        --frame-border: #4c4d55;
+        --frame-texture:
+            repeating-linear-gradient(45deg, rgba(255, 255, 255, 0.025) 0px, rgba(255, 255, 255, 0.025) 2px, transparent 2px, transparent 11px),
+            repeating-linear-gradient(-45deg, rgba(0, 0, 0, 0.18) 0px, rgba(0, 0, 0, 0.18) 1px, transparent 1px, transparent 13px),
+            linear-gradient(180deg, #3a3c43 0%, #2a2b30 55%, #1c1d21 100%);
+
+        --panel-bg: #26272d;
+        --panel-text: #e7e2d3;
+        --panel-border: #45464e;
+        --panel-texture:
+            radial-gradient(ellipse at 25% 20%, rgba(255, 255, 255, 0.028), transparent 55%),
+            radial-gradient(ellipse at 78% 80%, rgba(255, 255, 255, 0.02), transparent 55%),
+            var(--panel-bg);
+        --panel-shadow: inset 0 0 0 1px rgba(255, 255, 255, 0.05), 0 2px 12px rgba(0, 0, 0, 0.45);
+
+        --accent: #e0a458;
+        --accent-strong: #eab578;
+        --accent-text: #201205;
+        --link: #e0a458;
+
+        --error: #e08585;
+        --error-bg: #3a2323;
+        --success: #8fcf9a;
+        --success-bg: #1f3222;
+        --info: #8fb8e0;
+        --info-bg: #1f2b3a;
+
+        --vignette: radial-gradient(ellipse 60% 35% at 50% -10%, rgba(255, 170, 90, 0.10), transparent 60%);
+    }
+}
+
+:root[data-theme="dark"] {
+    --bg: #202126;
+    --text: #e7e2d3;
+
+    --frame-text: #e7e2d3;
+    --frame-border: #4c4d55;
+    --frame-texture:
+        repeating-linear-gradient(45deg, rgba(255, 255, 255, 0.025) 0px, rgba(255, 255, 255, 0.025) 2px, transparent 2px, transparent 11px),
+        repeating-linear-gradient(-45deg, rgba(0, 0, 0, 0.18) 0px, rgba(0, 0, 0, 0.18) 1px, transparent 1px, transparent 13px),
+        linear-gradient(180deg, #3a3c43 0%, #2a2b30 55%, #1c1d21 100%);
+
+    --panel-bg: #26272d;
+    --panel-text: #e7e2d3;
+    --panel-border: #45464e;
+    --panel-texture:
+        radial-gradient(ellipse at 25% 20%, rgba(255, 255, 255, 0.028), transparent 55%),
+        radial-gradient(ellipse at 78% 80%, rgba(255, 255, 255, 0.02), transparent 55%),
+        var(--panel-bg);
+    --panel-shadow: inset 0 0 0 1px rgba(255, 255, 255, 0.05), 0 2px 12px rgba(0, 0, 0, 0.45);
+
+    --accent: #e0a458;
+    --accent-strong: #eab578;
+    --accent-text: #201205;
+    --link: #e0a458;
+
+    --error: #e08585;
+    --error-bg: #3a2323;
+    --success: #8fcf9a;
+    --success-bg: #1f3222;
+    --info: #8fb8e0;
+    --info-bg: #1f2b3a;
+
+    --vignette: radial-gradient(ellipse 60% 35% at 50% -10%, rgba(255, 170, 90, 0.10), transparent 60%);
+}
+
+* {
+    box-sizing: border-box;
+}
+
+body {
+    margin: 0;
+    font-family: var(--font-body);
+    font-size: 17px;
+    background: var(--vignette), var(--bg);
+    color: var(--text);
+    line-height: 1.6;
+}
+
+h1, h2, h3 {
+    font-family: var(--font-heading);
+    line-height: 1.25;
+}
+
+a {
+    color: var(--link);
+}
+
+/* ---- Frame: header, footer, nav -- textured, decorative, short text only ---- */
+
+.site-header,
+.site-footer {
+    background: var(--frame-texture);
+    color: var(--frame-text);
+}
+
+.site-header {
+    border-bottom: 3px solid var(--frame-border);
+    padding: 0.85rem 1.25rem;
+    box-shadow: 0 2px 10px rgba(0, 0, 0, 0.3);
+}
+
+.site-footer {
+    border-top: 3px solid var(--frame-border);
+    text-align: center;
+    padding: 1.5rem;
+    font-size: 0.9rem;
+}
+
+.site-footer p {
+    margin: 0;
+    opacity: 0.85;
+}
+
+.site-nav {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    max-width: 64rem;
+    margin: 0 auto;
+    gap: 1rem;
+    flex-wrap: wrap;
+}
+
+.site-brand {
+    font-family: var(--font-heading);
+    font-weight: bold;
+    font-size: 1.4rem;
+    letter-spacing: 0.03em;
+    text-decoration: none;
+    color: var(--frame-text);
+    text-shadow: 0 1px 3px rgba(0, 0, 0, 0.4);
+}
+
+.site-nav-links {
+    display: flex;
+    align-items: center;
+    gap: 1.25rem;
+    list-style: none;
+    margin: 0;
+    padding: 0;
+    font-variant: small-caps;
+    letter-spacing: 0.04em;
+}
+
+.site-nav-links a {
+    color: var(--frame-text);
+    text-decoration: none;
+    opacity: 0.9;
+}
+
+.site-nav-links a:hover {
+    opacity: 1;
+    text-decoration: underline;
+}
+
+.site-nav-user {
+    font-style: italic;
+    opacity: 0.9;
+}
+
+#theme-toggle {
+    background: rgba(255, 255, 255, 0.08);
+    border: 1px solid rgba(255, 255, 255, 0.2);
+    color: var(--frame-text);
+    border-radius: 999px;
+    width: 2.1rem;
+    height: 2.1rem;
+    font-size: 1rem;
+    line-height: 1;
+    cursor: pointer;
+}
+
+#theme-toggle:hover {
+    background: rgba(255, 255, 255, 0.16);
+}
+
+main {
+    max-width: 78rem;
+    margin: 0 auto;
+    padding: 2rem 1.25rem;
+}
+
+/* ---- Panel: the clean, high-contrast surface actual copy lives on ---- */
+
+.panel,
+.hero,
+.auth-form {
+    background: var(--panel-texture);
+    color: var(--panel-text);
+    border: 1px solid var(--panel-border);
+    border-radius: 0.35rem;
+    box-shadow: var(--panel-shadow);
+}
+
+.hero {
+    text-align: center;
+    padding: 3rem 2rem;
+    max-width: 42rem;
+    margin: 0 auto;
+}
+
+.hero h1 {
+    font-size: 2.1rem;
+    margin-top: 0;
+}
+
+.panel {
+    margin: 0 auto;
+    padding: 1.75rem;
+}
+
+/* /writers -- one panel per house-roster narrator (templates/writers/index.twig).
+   Wider than the site's usual 42rem text column -- a side-by-side image +
+   bio needs the extra room, where a plain text panel wouldn't. */
+.writer-list {
+    max-width: 56rem;
+    margin: 1.5rem auto 0;
+    display: flex;
+    flex-direction: column;
+    gap: 1.5rem;
+}
+
+/* Image and text side by side, alternating which side the image sits on
+   per card (odd = image left, even = image right) so a long list of
+   portraits doesn't read as one repetitive left-aligned column. */
+.writer-card {
+    margin: 0;
+    display: flex;
+    align-items: flex-start;
+    gap: 1.5rem;
+}
+
+.writer-card:nth-child(even) {
+    flex-direction: row-reverse;
+}
+
+.writer-media {
+    flex: 0 0 16rem;
+}
+
+.writer-text {
+    flex: 1 1 auto;
+    min-width: 0;
+}
+
+/* Placeholder portrait -- public-domain art, not a photo of anyone real (see
+   writerRoster() in src/Routes/public.php). object-fit: contain rather than
+   cover -- these range from a tall portrait to a wide landscape to a near-
+   square silhouette, and a hard crop to a fixed box cut heads and figures
+   off some of them. Letterboxing onto the panel's own background instead
+   keeps every source image intact at the cost of a less uniform block of
+   whitespace around some of them -- an acceptable trade for placeholder art
+   that's likely to be swapped out later anyway. */
+.writer-portrait {
+    display: block;
+    width: 100%;
+    height: 18rem;
+    object-fit: contain;
+    background: var(--panel-bg);
+    border-radius: 0.35rem;
+}
+
+/* Below ~700px there isn't room for a 16rem image column beside readable
+   text -- stack image above bio instead, same as .recipe-with-ads and
+   .import-manual-columns collapse at their own breakpoints. */
+@media (max-width: 700px) {
+    .writer-card,
+    .writer-card:nth-child(even) {
+        flex-direction: column;
+    }
+
+    .writer-media {
+        flex-basis: auto;
+        width: 100%;
+    }
+}
+
+.writer-card h2 {
+    margin-top: 0;
+}
+
+.writer-domain {
+    font-style: italic;
+    opacity: 0.8;
+    margin-top: -0.5rem;
+}
+
+.writer-card blockquote {
+    margin: 1rem 0 0;
+    padding-left: 1rem;
+    border-left: 3px solid var(--panel-border);
+    font-style: italic;
+}
+
+.auth-form {
+    margin: 0 auto;
+    padding: 1.75rem;
+}
+
+.auth-form h1 {
+    margin-top: 0;
+    font-size: 1.5rem;
+}
+
+.auth-form label {
+    display: inline-block;
+    margin-top: 1rem;
+    font-weight: bold;
+}
+
+/* :not([type=checkbox]):not([type=radio]) -- this used to apply to every
+   <input> unconditionally, including checkboxes: width:100% + padding on a
+   checkbox produces a huge, oddly-centered box instead of a normal small
+   tickbox (visible on the "Published" checkbox on the recipe edit page).
+   Text-like inputs only. */
+.auth-form input:not([type="checkbox"]):not([type="radio"]) {
+    width: 100%;
+    padding: 0.55rem 0.6rem;
+    margin-top: 0.3rem;
+    border: 1px solid var(--panel-border);
+    border-radius: 0.25rem;
+    font: inherit;
+    background: var(--bg);
+    color: var(--text);
+}
+
+/* Never had a rule at all -- OriginalText/TranslatedText textareas were
+   rendering as stark unstyled white boxes, the one glaring inconsistency
+   on the recipe edit page. */
+.auth-form textarea {
+    width: 100%;
+    padding: 0.55rem 0.6rem;
+    margin-top: 0.3rem;
+    border: 1px solid var(--panel-border);
+    border-radius: 0.25rem;
+    font: inherit;
+    background: var(--bg);
+    color: var(--text);
+    resize: vertical;
+}
+
+.auth-form button {
+    margin-top: 1.6rem;
+    width: 100%;
+}
+
+.auth-form p {
+    font-size: 0.9rem;
+}
+
+/* ---- Buttons -- wax-seal styling: warm, rounded, small-caps ---- */
+
+.button,
+button:not(.link-button) {
+    display: inline-block;
+    background: linear-gradient(180deg, var(--accent-strong), var(--accent));
+    color: var(--accent-text);
+    border: none;
+    padding: 0.65rem 1.4rem;
+    font-size: 1rem;
+    font-family: var(--font-body);
+    font-variant: small-caps;
+    letter-spacing: 0.03em;
+    border-radius: 999px;
+    text-decoration: none;
+    cursor: pointer;
+    box-shadow: 0 2px 6px rgba(0, 0, 0, 0.25);
+}
+
+.button:hover,
+button:not(.link-button):hover {
+    filter: brightness(1.08);
+}
+
+.link-button {
+    background: none;
+    border: none;
+    color: var(--link);
+    text-decoration: underline;
+    cursor: pointer;
+    font: inherit;
+    padding: 0;
+}
+
+.inline-form {
+    display: inline;
+}
+
+/* ---- Flash messages & form errors ---- */
+
+.form-errors {
+    background: var(--error-bg);
+    border: 1px solid var(--error);
+    color: var(--error);
+    padding: 0.75rem 1.25rem;
+    border-radius: 0.25rem;
+    margin: 0 0 1rem;
+}
+
+.flash {
+    max-width: 64rem;
+    margin: 0 auto 1rem;
+    padding: 0.75rem 1rem;
+    border-radius: 0.25rem;
+    border: 1px solid currentColor;
+}
+
+.flash-success {
+    background: var(--success-bg);
+    color: var(--success);
+}
+
+.flash-info {
+    background: var(--info-bg);
+    color: var(--info);
+}
+
+.flash-error {
+    background: var(--error-bg);
+    color: var(--error);
+}
+
+.tag-chip-empty {
+    font-size: 0.85rem;
+    opacity: 0.65;
+}
+
+/* `button.button-danger`, not just `.button-danger` -- the base rule up top
+   is `.button, button:not(.link-button)`, and that second half (element +
+   :not(.class)) has specificity (0,1,1), higher than a bare class selector
+   (0,1,0). A plain `.button-danger` silently lost that fight and never
+   actually applied: every Delete button rendered in the same brown as
+   Rewrite. `button.button-danger` ties it at (0,1,1) and wins on source
+   order (defined after). */
+button.button-danger {
+    background: var(--error-bg);
+    color: var(--error);
+    box-shadow: inset 0 0 0 1px var(--error);
+}
+
+.tag-chip {
+    display: inline-block;
+    background: var(--panel-bg);
+    box-shadow: inset 0 0 0 1px var(--panel-border);
+    border-radius: 999px;
+    padding: 0.1rem 0.7rem;
+    margin: 0 0.3rem 0 0;
+    font-size: 0.85rem;
+}
+
+/* ---- Admin: recipe edit -- tags pill picker (site.js progressively
+   enhances the .tag-picker-options checkbox list from recipe_edit.twig into
+   this; see that JS block's comment). Sized/bordered like the text inputs
+   above (.auth-form input) so it reads as one form field, not a widget
+   bolted on. */
+
+.tag-picker {
+    position: relative;
+}
+
+.tag-picker-empty {
+    font-size: 0.9rem;
+}
+
+.tag-pills {
+    display: flex;
+    flex-wrap: wrap;
+    align-items: center;
+    gap: 0.4rem;
+    width: 100%;
+    padding: 0.45rem 0.6rem;
+    margin-top: 0.3rem;
+    border: 1px solid var(--panel-border);
+    border-radius: 0.25rem;
+    background: var(--bg);
+    cursor: text;
+}
+
+.tag-picker:focus-within .tag-pills {
+    outline: 2px solid var(--accent);
+    outline-offset: 1px;
+}
+
+.tag-pill {
+    display: inline-flex;
+    align-items: center;
+    gap: 0.35rem;
+    background: var(--panel-bg);
+    box-shadow: inset 0 0 0 1px var(--panel-border);
+    border-radius: 999px;
+    padding: 0.15rem 0.4rem 0.15rem 0.7rem;
+    font-size: 0.85rem;
+}
+
+/* `button.tag-pill-remove`, not just `.tag-pill-remove` -- same specificity
+   trap as `button.button-danger` above: the base rule up top is
+   `.button, button:not(.link-button)`, whose element+:not(.class) half ties
+   at (0,1,1), beating a bare class selector's (0,1,0). Without the element
+   prefix here, the × button silently inherited the wax-seal button's
+   padding/gradient/pill-radius instead of this reset -- a big brown lozenge
+   swallowing the pill instead of a small inline ×. */
+button.tag-pill-remove {
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    width: 1.1rem;
+    height: 1.1rem;
+    padding: 0;
+    margin: 0;
+    border: none;
+    border-radius: 50%;
+    background: none;
+    color: inherit;
+    font-size: 1rem;
+    line-height: 1;
+    cursor: pointer;
+    box-shadow: none;
+}
+
+button.tag-pill-remove:hover {
+    background: var(--accent);
+    color: var(--accent-text);
+    filter: none;
+}
+
+.tag-picker-input {
+    flex: 1 1 8rem;
+    min-width: 8rem;
+    border: none;
+    padding: 0.2rem 0;
+    margin: 0;
+    font: inherit;
+    background: none;
+    color: var(--text);
+}
+
+.tag-picker-input:focus {
+    outline: none;
+}
+
+.tag-picker-suggestions {
+    position: absolute;
+    z-index: 10;
+    top: 100%;
+    left: 0;
+    right: 0;
+    margin: 0.25rem 0 0;
+    padding: 0.3rem;
+    list-style: none;
+    background: var(--panel-texture);
+    border: 1px solid var(--panel-border);
+    border-radius: 0.25rem;
+    box-shadow: var(--panel-shadow);
+    max-height: 12rem;
+    overflow-y: auto;
+}
+
+.tag-picker-suggestion {
+    padding: 0.4rem 0.6rem;
+    border-radius: 0.2rem;
+    cursor: pointer;
+    font-size: 0.9rem;
+}
+
+.tag-picker-suggestion:hover {
+    background: var(--accent);
+    color: var(--accent-text);
+}
+
+.tag-picker-suggestion-create {
+    font-style: italic;
+    opacity: 0.9;
+}
+
+/* `[hidden]` alone loses to the base button rule for the same reason
+   .button-danger and .tag-pill-remove do above -- `.button,
+   button:not(.link-button)` sets `display: inline-block` unconditionally,
+   which beats the UA stylesheet's `[hidden] { display: none }` (author
+   styles always win over UA defaults, regardless of specificity). Setting
+   `saveButton.hidden = true` in site.js therefore did nothing visible until
+   this rule existed to actually honour it. */
+button.tag-picker-save[hidden] {
+    display: none;
+}
+
+/* Reserves its line whether or not it currently has text (the JS enhancement
+   writes into it after every save) so "Saved."/"Saving…" appearing doesn't
+   nudge the rest of the page down each time. */
+.tag-picker-status {
+    min-height: 1.2em;
+    margin: 0.4rem 0 0;
+    font-size: 0.85rem;
+    color: var(--success);
+}
+
+.tag-picker-status-error {
+    color: var(--error);
+}
+
+/* ---- Admin: recipes list (/admin/recipes) ---- */
+
+.recipe-list {
+    display: flex;
+    flex-direction: column;
+    gap: 0.6rem;
+}
+
+/* flex-start, not center: .recipe-row-tags can legitimately grow to two
+   lines (many tags) while its siblings stay one line tall, and these rows
+   can also vary in height from a long title wrapping. */
+.recipe-row {
+    display: flex;
+    align-items: flex-start;
+    flex-wrap: wrap;
+    gap: 0.5rem 1rem;
+    padding: 0.6rem 1rem;
+    background: var(--panel-texture);
+    border: 1px solid var(--panel-border);
+    border-radius: 0.35rem;
+}
+
+.recipe-row:nth-child(even) {
+    background: linear-gradient(rgba(0, 0, 0, 0.035), rgba(0, 0, 0, 0.035)), var(--panel-texture);
+}
+
+.recipe-row-status {
+    flex: 0 0 auto;
+    /* Nudge down to the vertical centre of the title's cap-height rather
+       than sitting flush with its very top. */
+    margin-top: 0.3rem;
+}
+
+.recipe-row-name {
+    flex: 1 1 auto;
+}
+
+.recipe-row-actions {
+    flex: 0 0 auto;
+    margin-left: auto;
+}
+
+/* Edit and the Delete form's button would otherwise sit flush against each
+   other. */
+.recipe-row-actions .button {
+    margin-right: 0.5rem;
+}
+
+.recipe-row-name small {
+    display: block;
+    opacity: 0.65;
+    font-size: 0.8rem;
+}
+
+.recipe-row-tags {
+    flex: 1 1 14rem;
+    min-width: 10rem;
+}
+
+.recipe-filter-form {
+    margin: 1rem 0;
+    padding: 0.75rem 1rem;
+    background: var(--panel-texture);
+    border: 1px solid var(--panel-border);
+    border-radius: 0.35rem;
+    line-height: 2.2rem;
+}
+
+.recipe-filter-form label {
+    display: inline-block;
+    vertical-align: middle;
+    margin-right: 0.4rem;
+    font-weight: bold;
+}
+
+.recipe-filter-form input[type="text"],
+.recipe-filter-form select {
+    display: inline-block;
+    vertical-align: middle;
+    margin-right: 1.25rem;
+    padding: 0.4rem 0.55rem;
+    border: 1px solid var(--panel-border);
+    border-radius: 0.25rem;
+    font: inherit;
+    background: var(--bg);
+    color: var(--text);
+}
+
+.recipe-filter-form button,
+.recipe-filter-form a {
+    vertical-align: middle;
+}
+
+.recipe-filter-form a {
+    margin-left: 0.75rem;
+}
+
+/* Published/unpublished one-click toggle -- a plain coloured dot, not a
+   wax-seal button, so it needs the .link-button class too (see .link-button
+   above) to opt out of the `button:not(.link-button)` gradient-pill rule
+   before these overrides apply. */
+.status-light {
+    width: 1rem;
+    height: 1rem;
+    border-radius: 50%;
+    box-shadow: inset 0 0 0 1px rgba(0, 0, 0, 0.3);
+    cursor: pointer;
+    transition: transform 0.12s ease, box-shadow 0.12s ease;
+}
+
+.status-light-published {
+    background: var(--success);
+}
+
+.status-light-unpublished {
+    background: var(--error);
+}
+
+/* A brightness filter on a 16px dot was too subtle to register as "this is
+   clickable" -- scale it up and add a ring instead, both clearly visible. */
+.status-light:hover {
+    transform: scale(1.4);
+    box-shadow: inset 0 0 0 1px rgba(0, 0, 0, 0.3), 0 0 0 3px rgba(0, 0, 0, 0.15);
+}
+
+/* .tag-name-input (the rename box on /admin/tags) previously had no styling
+   at all, sitting outside .auth-form's reach in a bare <li>, so it rendered
+   as a raw unstyled browser input next to otherwise-styled controls. */
+.tag-name-input {
+    display: inline-block;
+    vertical-align: middle;
+    margin-right: 1.25rem;
+    padding: 0.4rem 0.55rem;
+    border: 1px solid var(--panel-border);
+    border-radius: 0.25rem;
+    font: inherit;
+    background: var(--bg);
+    color: var(--text);
+}
+
+.mundane-truth summary {
+    font-size:1.6em;
+}
+
+/* ---- Ad placements (templates/recipes/detail.twig) --------------------
+   Placeholder boxes only for now -- solid light grey, standard IAB sizes
+   (728x90 leaderboard, 160x600 skyscraper). Deliberately NOT themed off
+   --panel/--frame tokens: these are third-party ad slots, not site chrome,
+   so they should look like a flat placeholder in both light and dark mode
+   rather than shifting with the parchment/slate theme. */
+.ad-slot {
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    background: #d9d9d9;
+    color: #6b6b6b;
+    border: 1px solid #bfbfbf;
+    border-radius: 0.25rem;
+    font-size: 0.8rem;
+    font-variant: small-caps;
+    letter-spacing: 0.04em;
+}
+
+.ad-leaderboard {
+    width: 728px;
+    max-width: 100%;
+    height: 90px;
+    margin: 0 auto 1.5rem;
+}
+
+.ad-skyscraper {
+    flex: 0 0 160px;
+    width: 160px;
+    height: 600px;
+}
+
+/* Skyscraper + main content side by side; the right-hand slot is the
+   editable placeholder called out in the brief, same dimensions as the
+   left ad so the page stays visually balanced. */
+.recipe-with-ads {
+    display: flex;
+    align-items: flex-start;
+    gap: 1.5rem;
+}
+
+.recipe-with-ads > article {
+    flex: 1 1 auto;
+    min-width: 0;
+}
+
+/* Below ~1000px there's no room for two 160px rails either side of the
+   recipe text without squeezing it unreadably narrow -- drop both side
+   slots and keep just the leaderboard, same breakpoint logic as the
+   site-nav wrap above. */
+@media (max-width: 1000px) {
+    .ad-skyscraper {
+        display: none;
+    }
+}
+
+/* ---- /admin/recipes/import/manual -- manual entry fields alongside an
+   iframe of the source page, for a URL automated import couldn't handle
+   (see templates/admin/recipe_import_manual.twig). Same side-by-side
+   pattern as .recipe-with-ads above. */
+.import-manual-columns {
+    display: flex;
+    align-items: flex-start;
+    gap: 1.5rem;
+    margin-top: 1rem;
+}
+
+.import-manual-fields,
+.import-manual-preview {
+    flex: 1 1 0;
+    min-width: 0;
+}
+
+.import-manual-preview iframe {
+    display: block;
+    width: 100%;
+    height: 70vh;
+    border: 1px solid var(--panel-border);
+    border-radius: 0.25rem;
+    background: var(--bg);
+}
+
+/* Same breakpoint as .recipe-with-ads -- not enough width below ~1000px
+   for fields and an iframe side by side, so stack them instead. */
+@media (max-width: 1000px) {
+    .import-manual-columns {
+        flex-direction: column;
+    }
+
+    .import-manual-preview iframe {
+        height: 50vh;
+    }
+}

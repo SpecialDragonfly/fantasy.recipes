@@ -1,0 +1,27 @@
+{% extends 'layout.twig' %}
+
+{% block title %}Search &mdash; fantasy.recipes{% endblock %}
+
+{% block content %}
+    <h1>Search</h1>
+
+    <form method="get" action="/search" class="search-form">
+        <label for="q" class="visually-hidden">Search recipes</label>
+        <input type="search" id="q" name="q" value="{{ query|default('') }}" placeholder="beef, cattle, dragon..." autofocus>
+        <button type="submit">Search</button>
+    </form>
+
+    {% if query %}
+        {% if results|length %}
+            <div class="recipe-grid">
+                {% for recipe in results %}
+                    <article class="panel recipe-card">
+                        <h2><a href="/recipes/{{ recipe.slug }}">{{ recipe.title }}</a></h2>
+                    </article>
+                {% endfor %}
+            </div>
+        {% else %}
+            <p class="panel">Nothing answered that call. Try another term.</p>
+        {% endif %}
+    {% endif %}
+{% endblock %}

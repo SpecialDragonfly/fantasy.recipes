@@ -1,0 +1,123 @@
+{% extends 'layout.twig' %}
+
+{% block title %}Admin: Recipes &mdash; fantasy.recipes{% endblock %}
+
+{% block content %}
+    {% set baseParams = {} %}
+    {% if search %}{% set baseParams = baseParams|merge({'q': search}) %}{% endif %}
+    {% if tagId %}{% set baseParams = baseParams|merge({'tag': tagId}) %}{% endif %}
+    {% if status %}{% set baseParams = baseParams|merge({'status': status}) %}{% endif %}
+
+    <section class="panel">
+        <h1>Recipes</h1>
+        <p>
+            {% if search or tagId or status %}
+                {{ total }} recipe{{ total == 1 ? '' : 's' }} match this filter.
+            {% else %}
+                {{ total }} recipe{{ total == 1 ? '' : 's' }} total.
+            {% endif %}
+            <a href="/admin/recipes/import" class="button">Import a recipe</a>
+            <a href="/admin/recipes/new" class="button">New recipe</a>
+        </p>
+
+        <form method="get" action="/admin/recipes" class="recipe-filter-form">
+            <label for="q">Search title</label>
+            <input type="text" id="q" name="q" value="{{ search|default('') }}" placeholder="e.g. cocktail">
+
+            <label for="tag">Tag</label>
+            <select id="tag" name="tag">
+                <option value="">Any tag</option>
+                {% for tag in allTags %}
+                    <option value="{{ tag.id }}" {% if tagId == tag.id %}selected{% endif %}>{{ tag.name }}</option>
+                {% endfor %}
+            </select>
+
+            <label for="status">Status</label>
+            <select id="status" name="status">
+                <option value="">Any status</option>
+                <option value="draft" {% if status == 'draft' %}selected{% endif %}>Draft</option>
+                <option value="published" {% if status == 'published' %}selected{% endif %}>Published</option>
+            </select>
+
+            <button type="submit">Filter</button>
+            {% if search or tagId or status %}<a href="/admin/recipes">Clear filters</a>{% endif %}
+        </form>
+
+        {% if recipes|length %}
+            <div class="recipe-list">
+                {% for recipe in recipes %}
+                    {% set rowTagIds = tagIdsByRow[recipe.id]|default([]) %}
+                    <div class="recipe-row">
+                        <form method="post"
+                              action="/admin/recipes/{{ recipe.id }}/{{ recipe.status == 'published' ? 'unpublish' : 'publish' }}"
+                              class="inline-form recipe-row-status">
+                            {% include 'partials/_csrf.twig' %}
+                            <input type="hidden" name="return_to" value="list">
+                            <input type="hidden" name="page" value="{{ page }}">
+                            <input type="hidden" name="q" value="{{ search|default('') }}">
+                            <input type="hidden" name="tag" value="{{ tagId|default('') }}">
+                            <input type="hidden" name="status" value="{{ status|default('') }}">
+                            <button type="submit"
+                                    class="link-button status-light {{ recipe.status == 'published' ? 'status-light-published' : 'status-light-unpublished' }}"
+                                    title="{{ recipe.status == 'published' ? 'Published — click to unpublish' : 'Draft — click to publish' }}"
+                                    aria-label="{{ recipe.status == 'published' ? 'Published, click to unpublish' : 'Draft, click to publish' }}"></button>
+                        </form>
+                        <div class="recipe-row-name">
+                            <strong>{{ recipe.title }}</strong>
+                            <small>{{ recipe.slug }}</small>
+                        </div>
+                        <div class="recipe-row-tags">
+                            {% for tag in allTags %}
+                                {% if tag.id in rowTagIds %}<span class="tag-chip">{{ tag.name }}</span>{% endif %}
+                            {% endfor %}
+                            {% if rowTagIds|length == 0 %}<span class="tag-chip-empty">No tags</span>{% endif %}
+                        </div>
+                        <div class="recipe-row-actions">
+                            {# Carries page/q/tag/status forward so the edit page's Back link
+                               (see recipe_edit.twig) can return here, not to an
+                               unfiltered page 1 -- read back via
+                               recipesListReturnTo($request->getQueryParams()) in the
+                               GET /recipes/{id}/edit route. #}
+                            <a href="/admin/recipes/{{ recipe.id }}/edit?{{ baseParams|merge({'page': page})|url_encode }}"
+                               class="button">Edit</a>
+                            {# Progressively enhanced to an AJAX in-place row removal by
+                               site.js (see the .recipe-delete-form handler there) --
+                               this plain form is also the full no-JS fallback, so it
+                               still needs to work as a normal POST + redirect on its
+                               own. data-recipe-title feeds the JS confirm() prompt;
+                               the hidden page/q/tag/status fields are only used by that
+                               fallback path (recipesListReturnTo() on the server). #}
+                            <form method="post" action="/admin/recipes/{{ recipe.id }}/delete"
+                                  class="inline-form recipe-delete-form" data-recipe-title="{{ recipe.title }}">
+                                {% include 'partials/_csrf.twig' %}
+                                <input type="hidden" name="page" value="{{ page }}">
+                                <input type="hidden" name="q" value="{{ search|default('') }}">
+                                <input type="hidden" name="tag" value="{{ tagId|default('') }}">
+                                <input type="hidden" name="status" value="{{ status|default('') }}">
+                                <button type="submit" class="button button-danger">Delete</button>
+                            </form>
+                        </div>
+                    </div>
+                {% endfor %}
+            </div>
+
+            <p>
+                {% if page > 1 %}
+                    <a href="/admin/recipes?{{ baseParams|merge({'page': page - 1})|url_encode }}">&laquo; Previous</a>
+                {% endif %}
+                {% if page > 1 and hasNextPage %} &mdash; {% endif %}
+                {% if hasNextPage %}
+                    <a href="/admin/recipes?{{ baseParams|merge({'page': page + 1})|url_encode }}">Next &raquo;</a>
+                {% endif %}
+            </p>
+        {% else %}
+            <p>
+                {% if search or tagId or status %}
+                    Nothing matches this filter. <a href="/admin/recipes">Clear filters</a> to see every recipe.
+                {% else %}
+                    No recipes yet.
+                {% endif %}
+            </p>
+        {% endif %}
+    </section>
+{% endblock %}

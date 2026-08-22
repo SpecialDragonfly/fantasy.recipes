@@ -1,0 +1,39 @@
+{% extends 'layout.twig' %}
+
+{% block title %}Our Writers &mdash; fantasy.recipes{% endblock %}
+
+{% block content %}
+    <h1>Our Writers</h1>
+    <p class="panel">
+        Every recipe on this site is told by someone &mdash; a witch, a
+        dragon, a vampire who has never once given the same account of his
+        own birth twice. We don't treat them as a stylistic device. As far
+        as this site is concerned, they're the authors, and this is where
+        you meet them.
+    </p>
+
+    <div class="writer-list">
+        {% for writer in writers %}
+            <article class="panel writer-card">
+                {% if writer.image %}
+                    <div class="writer-media">
+                        {# alt is deliberately the source image's own page URL, not a
+                           descriptive caption -- see writerRoster()'s docblock in
+                           src/Routes/public.php for why. #}
+                        <img src="{{ writer.image }}" alt="{{ writer.imageAlt }}" class="writer-portrait" loading="lazy">
+                    </div>
+                {% endif %}
+                <div class="writer-text">
+                    <h2>{{ writer.name }}</h2>
+                    <p class="writer-domain">{{ writer.domain }}</p>
+                    {% for paragraph in writer.bio %}
+                        <p>{{ paragraph }}</p>
+                    {% endfor %}
+                    {% if writer.quote %}
+                        <blockquote>&ldquo;{{ writer.quote }}&rdquo;</blockquote>
+                    {% endif %}
+                </div>
+            </article>
+        {% endfor %}
+    </div>
+{% endblock %}
