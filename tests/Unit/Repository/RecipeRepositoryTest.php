@@ -41,15 +41,19 @@ final class RecipeRepositoryTest extends TestCase
         self::assertNull($this->repository->findByOrigin('https://example.com/nope'));
     }
 
-    public function testUpdatePublishedTrueSetsStatusToPublished(): void
+    public function testUpdateChangesSlugAndTitleWithoutTouchingStatus(): void
     {
         $id = $this->repository->create('dragons-stew', 'Dragon Stew', null, '', '');
+        $this->repository->setPublished($id, true);
 
-        $this->repository->update($id, 'dragons-stew', 'Dragon Stew Supreme', true);
+        $this->repository->update($id, 'dragons-stew-supreme', 'Dragon Stew Supreme');
 
         $recipe = $this->repository->findById($id);
         self::assertNotNull($recipe);
+        self::assertSame('dragons-stew-supreme', $recipe['slug']);
         self::assertSame('Dragon Stew Supreme', $recipe['title']);
+        // update() doesn't touch status -- setPublished() is the only path
+        // that does (see update()'s docblock).
         self::assertSame('published', $recipe['status']);
     }
 

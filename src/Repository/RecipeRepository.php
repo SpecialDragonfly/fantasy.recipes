@@ -128,23 +128,25 @@ final class RecipeRepository
     }
 
     /**
-     * The admin "recipe details" form: slug, title, and the publish toggle
-     * together -- everything else (ingredients/instructions, narrator/
+     * The admin "recipe details" form: slug and title -- status is
+     * deliberately not one of this method's params. It's set solely by
+     * setPublished() below, via the Publish/Unpublish quick-toggle
+     * (recipe_edit.twig), so there's exactly one path that ever changes it
+     * rather than two (this used to also take a $published flag from a
+     * "Published" checkbox that duplicated the same toggle -- removed as
+     * redundant). Everything else (ingredients/instructions, narrator/
      * narrator_recipe, story, tags) is saved through its own dedicated
      * method/form.
      */
-    public function update(int $id, string $slug, string $title, bool $published): void
+    public function update(int $id, string $slug, string $title): void
     {
         $statement = $this->pdo->prepare(
-            'UPDATE recipes '
-            . "SET slug = :slug, title = :title, status = :status, updated_at = :updated_at "
-            . 'WHERE id = :id',
+            'UPDATE recipes SET slug = :slug, title = :title, updated_at = :updated_at WHERE id = :id',
         );
 
         $statement->execute([
             'slug' => $slug,
             'title' => $title,
-            'status' => $published ? 'published' : 'draft',
             'updated_at' => (new DateTimeImmutable())->format('Y-m-d H:i:s'),
             'id' => $id,
         ]);

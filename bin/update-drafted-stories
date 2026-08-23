@@ -14,6 +14,12 @@ declare(strict_types=1);
  * matching draft are skipped, same idempotent/resumable spirit as
  * insert-drafted-stories.
  *
+ * `narrator` is now recipes.narrator, not a per-Story field -- see
+ * db/migrations/20260823120000_consolidate_narrator_onto_recipes.php --
+ * so the narrator-match check below compares against the recipe, and this
+ * only ever touches the Story's body, never its (now nonexistent)
+ * per-Story narrator.
+ *
  * Usage: php bin/update-drafted-stories < batch.json
  */
 
@@ -61,13 +67,12 @@ foreach ($batch as $entry) {
         continue;
     }
 
-    $existing = $stories->findById($recipe['story_id']);
-    if ($existing === null || $existing['narrator'] !== $narrator) {
+    if ($recipe['narrator'] !== $narrator) {
         $skipped++;
         continue;
     }
 
-    $stories->update($existing['id'], $narrator, $body);
+    $stories->update((int) $recipe['story_id'], $body);
     $updated++;
 }
 

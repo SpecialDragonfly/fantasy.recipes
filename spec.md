@@ -40,7 +40,9 @@ free-form prose, not structured data. Holds:
   verbatim from a source site.
 - `Narrator` — the character voicing this recipe's ritual-styled prose and
   its Story (see Narrator below). Assigned once a recipe is ready for its
-  narrative pass.
+  narrative pass, picked from the fixed house roster — the single field
+  backing both NarratorRecipe's voice and the Story's "Told by" credit,
+  which no longer holds a separate copy.
 - `NarratorRecipe` — the ritual-styled version of the instructions, in the
   assigned Narrator's voice. Hand-crafted prose, AI-drafted first from
   `OriginalInstructions`, then reviewed/edited by an admin before
@@ -63,9 +65,11 @@ admin-authored only — there is no public submission/moderation flow (see
 Roles & Permissions).
 
 **Narrator**
-The fantasy character voicing a Recipe's Story and NarratorRecipe. Fully
-open-ended — no fixed roster (see `personas.md` for the curated house
-roster used as a starting set of voices).
+The fantasy character voicing a Recipe's Story and NarratorRecipe. Picked
+per-recipe from a fixed house roster (`App\Recipe\Narrators`, kept in sync
+by hand with `personas.md`) rather than free text — any narrator can
+narrate any recipe (a dragon narrating a salad is fine; the roster reflects
+each persona's usual speciality, not a hard restriction on subject matter).
 
 **Tag**
 A single, homogeneous tag type covering both functional/navigational tags

@@ -12,9 +12,16 @@ declare(strict_types=1);
  * live Story (idempotent/resumable, same spirit as every other batch job
  * in this codebase).
  *
+ * `narrator` is now recipes.narrator (App\Recipe\Narrators), not a
+ * per-Story field -- see
+ * db/migrations/20260823120000_consolidate_narrator_onto_recipes.php --
+ * so each entry assigns the recipe's narrator (leaving any existing
+ * narrator_recipe text untouched) before creating its Story.
+ *
  * Usage: php bin/insert-drafted-stories < batch.json
  */
 
+use App\Recipe\Narrators;
 use App\Repository\RecipeRepository;
 use App\Repository\StoryRepository;
 
@@ -59,7 +66,14 @@ foreach ($batch as $entry) {
         continue;
     }
 
-    $stories->create($recipeId, $narrator, $body, null);
+    if (!Narrators::isValid($narrator)) {
+        fwrite(STDERR, "Skipping recipe_id {$recipeId} -- \"{$narrator}\" isn't on the narrator roster.\n");
+        $skipped++;
+        continue;
+    }
+
+    $recipes->updateNarratorRecipe($recipeId, $narrator, (string) ($recipe['narrator_recipe'] ?? ''));
+    $stories->create($recipeId, $body, null);
     $created++;
 }
 

@@ -1,13 +1,14 @@
 # Fantasy Recipes — Narrator Personas
 
-Companion to `spec.md`. The **Narrator** field on a Story is fully
-open-ended by design (see spec — no fixed roster, anyone can submit a
-sentient-spoon narrator and it lives or dies on admin review). This doc is
-the **house roster**: a curated set of recurring, well-developed personas
-for admin-authored Stories and for briefing the AI on `recipe:translate-draft`
-runs, so the corpus has a consistent cast of voices rather than sounding
-AI-generic. Community submissions are still free to invent new ones — a
-good submitted narrator can graduate onto this list.
+Companion to `spec.md`. The **Narrator** field on a Recipe is picked from a
+fixed roster (`App\Recipe\Narrators`, kept in sync by hand with this doc) --
+not free text. This doc is that **house roster**: a curated set of
+recurring, well-developed personas for admin-authored Stories and for
+briefing the AI on `recipe:translate-draft` runs, so the corpus has a
+consistent cast of voices rather than sounding AI-generic. Adding a new
+persona means writing it up here (and its full profile in `narrators/`) and
+adding it to `App\Recipe\Narrators::NAMES` and `writerRoster()`
+(`src/Routes/public.php`) before it's selectable.
 
 Every persona here is built to the tone rules already set in `spec.md`:
 whimsical high-fantasy (Prancing Pony / BG3 / Witcher 3 tavern), explicitly
@@ -573,9 +574,10 @@ Toast First, The Party Doesn't End, Long Table Energy*
   Concierge → any drink/cocktail tag, Fennick → any recipe tagged for a
   holiday or occasion** — gives every existing functional tag category in
   `spec.md` a house voice to draft from.
-- None of this is exclusive or exhaustive — `Narrator` stays free-text per
-  spec. This roster exists so the AI translation batch job and admin
-  authors have consistent go-to voices, not to restrict submissions.
+- None of this pairing is exclusive or mandatory — any narrator can
+  narrate any recipe (see spec: `Narrator`). This roster exists so the AI
+  translation batch job and admin authors have consistent go-to voices,
+  not to restrict which persona goes with which dish.
 - The Concierge and Auberon are both "erudite" registers and sit closest
   together on tone — keep them apart in practice: Auberon lectures about
   the *craft*, the Concierge digresses about *himself*. If a drafted

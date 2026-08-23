@@ -28,7 +28,14 @@ use Throwable;
  * repository-to-repository dependency for what's really one invariant
  * (recipes.story_id always points at this recipe's one live story).
  *
- * @phpstan-type StoryRow array{id: int, recipe_id: int, narrator: string, body: string, author_user_id: int|null, created_at: string, archived_at: string|null}
+ * No `narrator` column here -- it lives solely on `recipes.narrator`
+ * (App\Recipe\Narrators), one admin-picked value shared by the Story's
+ * "Told by" credit and the narrator_recipe ritual text alike, rather than
+ * a separate free-text copy per Story row that could drift from it (see
+ * db/migrations/20260823120000_consolidate_narrator_onto_recipes.php).
+ * Callers needing the narrator for display join back to the recipe.
+ *
+ * @phpstan-type StoryRow array{id: int, recipe_id: int, body: string, author_user_id: int|null, created_at: string, archived_at: string|null}
  */
 final class StoryRepository
 {
@@ -56,12 +63,12 @@ final class StoryRepository
      * same as before: the admin "add a Story" form branches on whether
      * recipes.story_id is already set).
      */
-    public function create(int $recipeId, string $narrator, string $body, ?int $authorUserId): int
+    public function create(int $recipeId, string $body, ?int $authorUserId): int
     {
         $this->pdo->beginTransaction();
 
         try {
-            $newId = self::insert($this->pdo, $recipeId, $narrator, $body, $authorUserId);
+            $newId = self::insert($this->pdo, $recipeId, $body, $authorUserId);
             self::pointRecipeAt($this->pdo, $recipeId, $newId);
 
             $this->pdo->commit();
@@ -82,12 +89,10 @@ final class StoryRepository
      * whoever it already was -- fixing a typo doesn't reassign authorship
      * credit.
      */
-    public function update(int $id, string $narrator, string $body): void
+    public function update(int $id, string $body): void
     {
-        $statement = $this->pdo->prepare(
-            'UPDATE stories SET narrator = :narrator, body = :body WHERE id = :id',
-        );
-        $statement->execute(['narrator' => $narrator, 'body' => $body, 'id' => $id]);
+        $statement = $this->pdo->prepare('UPDATE stories SET body = :body WHERE id = :id');
+        $statement->execute(['body' => $body, 'id' => $id]);
     }
 
     /**
@@ -98,7 +103,7 @@ final class StoryRepository
      * needed) -- same fallback InstructionSetRepository::setDraftTranslation()
      * used to play for a recipe with nothing drafted yet.
      */
-    public function replace(int $recipeId, string $narrator, string $body, ?int $authorUserId): int
+    public function replace(int $recipeId, string $body, ?int $authorUserId): int
     {
         $this->pdo->beginTransaction();
 
@@ -117,7 +122,7 @@ final class StoryRepository
                 ]);
             }
 
-            $newId = self::insert($this->pdo, $recipeId, $narrator, $body, $authorUserId);
+            $newId = self::insert($this->pdo, $recipeId, $body, $authorUserId);
             self::pointRecipeAt($this->pdo, $recipeId, $newId);
 
             $this->pdo->commit();
@@ -152,21 +157,47 @@ final class StoryRepository
         return $statement->fetchAll();
     }
 
-    private static function insert(PDO $pdo, int $recipeId, string $narrator, string $body, ?int $authorUserId): int
+    private static function insert(PDO $pdo, int $recipeId, string $body, ?int $authorUserId): int
     {
         $statement = $pdo->prepare(
-            'INSERT INTO stories (recipe_id, narrator, body, author_user_id, created_at) '
-            . 'VALUES (:recipe_id, :narrator, :body, :author_user_id, :created_at)',
+            'INSERT INTO stories (recipe_id, body, author_user_id, created_at) '
+            . 'VALUES (:recipe_id, :body, :author_user_id, :created_at)',
         );
         $statement->execute([
             'recipe_id' => $recipeId,
-            'narrator' => $narrator,
             'body' => $body,
-            'author_user_id' => $authorUserId,
+            'author_user_id' => self::existingUserId($pdo, $authorUserId),
             'created_at' => (new DateTimeImmutable())->format('Y-m-d H:i:s'),
         ]);
 
         return (int) $pdo->lastInsertId();
+    }
+
+    /**
+     * Falls back to NULL for an author id that no longer names a real user
+     * -- callers pass SessionAuth::id(), which is read straight out of
+     * $_SESSION and never re-checked against the users table, so a session
+     * that outlives its user (the DB got reset/reseeded, or a user row
+     * disappeared, while a browser was still logged in) hands back an id
+     * that INSERT would otherwise reject outright: stories.author_user_id
+     * is a real FOREIGN KEY (ON DELETE SET NULL for a user deleted *after*
+     * authoring a Story -- see the stories migration), but that clause
+     * only fires on an existing row's delete, not a fresh INSERT with a
+     * bogus id, so a stale session id used to crash the save entirely
+     * (PDOException: FOREIGN KEY constraint failed) instead of just
+     * landing with no attributed author, same as it would once the FK's
+     * own ON DELETE clause caught up later.
+     */
+    private static function existingUserId(PDO $pdo, ?int $authorUserId): ?int
+    {
+        if ($authorUserId === null) {
+            return null;
+        }
+
+        $statement = $pdo->prepare('SELECT 1 FROM users WHERE id = :id');
+        $statement->execute(['id' => $authorUserId]);
+
+        return $statement->fetchColumn() !== false ? $authorUserId : null;
     }
 
     private static function pointRecipeAt(PDO $pdo, int $recipeId, int $storyId): void

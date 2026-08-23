@@ -26,9 +26,16 @@ use PDO;
  */
 final class InMemoryDatabase
 {
-    public static function create(): PDO
+    /**
+     * @param PDO|null $pdo An already-constructed PDO to schema onto instead
+     *     of a plain sqlite::memory: connection -- lets a test hand in a PDO
+     *     subclass (e.g. one that throws on a specific statement, to test
+     *     transaction rollback) while still getting the same baseline schema
+     *     as every other repository test.
+     */
+    public static function create(?PDO $pdo = null): PDO
     {
-        $pdo = new PDO('sqlite::memory:');
+        $pdo ??= new PDO('sqlite::memory:');
         $pdo->setAttribute(PDO::ATTR_ERRMODE, PDO::ERRMODE_EXCEPTION);
         $pdo->setAttribute(PDO::ATTR_EMULATE_PREPARES, false);
         $pdo->setAttribute(PDO::ATTR_DEFAULT_FETCH_MODE, PDO::FETCH_ASSOC);
@@ -104,7 +111,6 @@ final class InMemoryDatabase
             'CREATE TABLE stories (
                 id INTEGER PRIMARY KEY AUTOINCREMENT,
                 recipe_id INTEGER NOT NULL,
-                narrator VARCHAR(255) NOT NULL,
                 body TEXT NOT NULL,
                 author_user_id INTEGER NULL,
                 created_at DATETIME NOT NULL,

@@ -137,6 +137,13 @@
     box-sizing: border-box;
 }
 
+/* display:flex + min-height:100vh on body, with .content-container and
+   main both flex:1 below, is the standard sticky-footer trick: on a short
+   page, main stretches to fill whatever space the header + footer don't
+   take, pushing .site-footer to the bottom of the viewport instead of it
+   sitting wherever <main>'s own content happens to end. On a tall page
+   this does nothing (there's no slack to stretch into), so scrolling
+   behaves exactly as before. */
 body {
     margin: 0;
     font-family: var(--font-body);
@@ -144,6 +151,15 @@ body {
     background: var(--vignette), var(--bg);
     color: var(--text);
     line-height: 1.6;
+    display: flex;
+    flex-direction: column;
+    min-height: 100vh;
+}
+
+.content-container {
+    display: flex;
+    flex-direction: column;
+    flex: 1 0 auto;
 }
 
 h1, h2, h3 {
@@ -245,6 +261,8 @@ a {
 }
 
 main {
+    flex: 1 0 auto;
+    width: 100%;
     max-width: 78rem;
     margin: 0 auto;
     padding: 2rem 1.25rem;
@@ -805,6 +823,16 @@ button.tag-picker-save[hidden] {
     font: inherit;
     background: var(--bg);
     color: var(--text);
+}
+
+.narrator-story {
+    background-image: url("../images/parch.png");
+    margin-bottom:20px;
+}
+
+.narrator-recipe {
+    background-image: url("../images/parch.png");
+    margin-bottom:20px;
 }
 
 .mundane-truth summary {

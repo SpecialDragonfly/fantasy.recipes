@@ -6,6 +6,7 @@ use App\Auth\Roles;
 use App\Auth\SessionAuth;
 use App\Http\Flash;
 use App\Http\Middleware\RequireRoleMiddleware;
+use App\Recipe\Narrators;
 use App\Repository\RecipeRepository;
 use App\Repository\StoryRepository;
 use App\Repository\TagRepository;
@@ -304,6 +305,7 @@ return function (App $app): void {
                     'archivedStories' => $stories->listArchived($recipeId),
                     'allTags' => $tags->all(),
                     'recipeTags' => $tags->tagsForRecipe($recipeId),
+                    'narrators' => Narrators::NAMES,
                     // recipesListReturnTo() reads the same page/q/tag/status
                     // keys whether they come from a POST body (the publish/
                     // unpublish/delete redirects) or, here, the query
@@ -316,6 +318,22 @@ return function (App $app): void {
             },
         );
 
+        // The recipe edit page's single Save button -- everything that's
+        // "draft content an admin fills in over time" (details, the
+        // mundane truth, the narrator + ritual recipe, and the Story) is
+        // one form now, saved together by this one handler, rather than
+        // four separate forms each with their own Save button and their
+        // own silently-lost-if-you-forget-to-click-it section. Tags
+        // (auto-saves per pill via its own widget -- see site.js),
+        // Publish/Unpublish (an immediate status action), and Delete
+        // (destructive, wants its own confirm) are deliberately NOT part
+        // of this -- see recipe_edit.twig's comment on the merged form.
+        //
+        // All-or-nothing: any validation failure (slug, title, narrator)
+        // saves nothing at all, rather than partially applying whichever
+        // fields happened to validate -- an admin fixing a typo'd slug
+        // shouldn't have to wonder whether their ingredients edit further
+        // down the same page silently didn't take.
         $group->post(
             '/recipes/{id}',
             function (Request $request, Response $response, array $args) use ($container): Response {
@@ -333,7 +351,11 @@ return function (App $app): void {
                 $data = (array) $request->getParsedBody();
                 $slug = trim($data['slug'] ?? '');
                 $title = trim($data['title'] ?? '');
-                $published = isset($data['published']) && $data['published'] === '1';
+                $originalIngredients = (string) ($data['original_ingredients'] ?? '');
+                $originalInstructions = (string) ($data['original_instructions'] ?? '');
+                $narrator = trim($data['narrator'] ?? '');
+                $narratorRecipe = (string) ($data['narrator_recipe'] ?? '');
+                $storyBody = trim($data['story_body'] ?? '');
 
                 $errors = [];
 
@@ -350,14 +372,39 @@ return function (App $app): void {
                     $errors[] = 'That slug is already in use by another recipe.';
                 }
 
+                if (!Narrators::isValid($narrator)) {
+                    $errors[] = 'Choose a narrator from the list.';
+                }
+
                 if ($errors !== []) {
                     Flash::add('error', implode(' ', $errors));
 
                     return $response->withHeader('Location', '/admin/recipes/' . $recipeId . '/edit')->withStatus(302);
                 }
 
-                $recipes->update($recipeId, $slug, $title, $published);
-                Flash::add('success', 'Recipe details saved.');
+                $recipes->update($recipeId, $slug, $title);
+                $recipes->updateOriginalIngredients($recipeId, $originalIngredients);
+                $recipes->updateOriginalInstructions($recipeId, $originalInstructions);
+                $recipes->updateNarratorRecipe($recipeId, $narrator, $narratorRecipe);
+
+                // A blank Story textarea leaves whatever Story already
+                // exists untouched rather than blocking the whole save or
+                // deleting it -- the Story is optional here the same way
+                // it always has been (a recipe with "none yet" is a normal
+                // state), so an admin editing everything else on this page
+                // shouldn't be forced to also have Story text ready.
+                if ($storyBody !== '') {
+                    /** @var StoryRepository $stories */
+                    $stories = $container->get(StoryRepository::class);
+
+                    if ($recipe['story_id'] !== null) {
+                        $stories->update((int) $recipe['story_id'], $storyBody);
+                    } else {
+                        $stories->create($recipeId, $storyBody, SessionAuth::id());
+                    }
+                }
+
+                Flash::add('success', 'Recipe saved.');
 
                 return $response->withHeader('Location', '/admin/recipes/' . $recipeId . '/edit')->withStatus(302);
             },
@@ -448,62 +495,6 @@ return function (App $app): void {
             },
         );
 
-        // Ingredients + instructions saved together from one form -- same
-        // "mundane truth" section the public detail page's reveal toggle
-        // shows (spec.md -- Immersion Rules).
-        $group->post(
-            '/recipes/{id}/original',
-            function (Request $request, Response $response, array $args) use ($container): Response {
-                $recipeId = (int) $args['id'];
-
-                /** @var RecipeRepository $recipes */
-                $recipes = $container->get(RecipeRepository::class);
-
-                if ($recipes->findById($recipeId) === null) {
-                    return $response->withStatus(404);
-                }
-
-                /** @var array<string, string> $data */
-                $data = (array) $request->getParsedBody();
-                $recipes->updateOriginalIngredients($recipeId, (string) ($data['original_ingredients'] ?? ''));
-                $recipes->updateOriginalInstructions($recipeId, (string) ($data['original_instructions'] ?? ''));
-
-                Flash::add('success', 'Ingredients and instructions saved.');
-
-                return $response->withHeader('Location', '/admin/recipes/' . $recipeId . '/edit')->withStatus(302);
-            },
-        );
-
-        // Narrator + the ritual-styled instructions in that narrator's
-        // voice (spec.md -- Content Pipeline step 3) -- saved together,
-        // hand-typed or pasted in from an AI draft either way. No separate
-        // drafted/reviewed status anymore (see the recipes migration): a
-        // recipe is just a draft, edited freely, until an admin publishes
-        // it.
-        $group->post(
-            '/recipes/{id}/narrator-recipe',
-            function (Request $request, Response $response, array $args) use ($container): Response {
-                $recipeId = (int) $args['id'];
-
-                /** @var RecipeRepository $recipes */
-                $recipes = $container->get(RecipeRepository::class);
-
-                if ($recipes->findById($recipeId) === null) {
-                    return $response->withStatus(404);
-                }
-
-                /** @var array<string, string> $data */
-                $data = (array) $request->getParsedBody();
-                $narrator = trim($data['narrator'] ?? '');
-                $narratorRecipe = (string) ($data['narrator_recipe'] ?? '');
-
-                $recipes->updateNarratorRecipe($recipeId, $narrator, $narratorRecipe);
-                Flash::add('success', 'Narrator recipe saved.');
-
-                return $response->withHeader('Location', '/admin/recipes/' . $recipeId . '/edit')->withStatus(302);
-            },
-        );
-
         $group->post(
             '/recipes/{id}/tags',
             function (Request $request, Response $response, array $args) use ($container): Response {
@@ -537,54 +528,6 @@ return function (App $app): void {
                 }
 
                 Flash::add('success', 'Tags updated.');
-
-                return $response->withHeader('Location', '/admin/recipes/' . $recipeId . '/edit')->withStatus(302);
-            },
-        );
-
-        // --- Story (admin-authored, direct) --------------------------------
-        //
-        // One form handles both: if no live Story exists yet this creates
-        // it, otherwise it corrects the existing one in place
-        // (StoryRepository::update() -- no archiving, this is a direct fix
-        // to the admin's own live text, not a genuine replacement -- see
-        // update()'s docblock). replace()'s archive-on-swap behaviour is
-        // reserved for a deliberate re-draft (e.g. a future AI regeneration
-        // pass), not built into this form.
-        $group->post(
-            '/recipes/{id}/story',
-            function (Request $request, Response $response, array $args) use ($container): Response {
-                $recipeId = (int) $args['id'];
-
-                /** @var RecipeRepository $recipes */
-                $recipes = $container->get(RecipeRepository::class);
-                $recipe = $recipes->findById($recipeId);
-
-                if ($recipe === null) {
-                    return $response->withStatus(404);
-                }
-
-                /** @var array<string, string> $data */
-                $data = (array) $request->getParsedBody();
-                $narrator = trim($data['narrator'] ?? '');
-                $body = trim($data['body'] ?? '');
-
-                if ($narrator === '' || mb_strlen($narrator) > 255 || $body === '') {
-                    Flash::add('error', 'Story needs both a narrator (1-255 characters) and a body.');
-
-                    return $response->withHeader('Location', '/admin/recipes/' . $recipeId . '/edit')->withStatus(302);
-                }
-
-                /** @var StoryRepository $stories */
-                $stories = $container->get(StoryRepository::class);
-
-                if ($recipe['story_id'] !== null) {
-                    $stories->update((int) $recipe['story_id'], $narrator, $body);
-                    Flash::add('success', 'Story updated.');
-                } else {
-                    $stories->create($recipeId, $narrator, $body, SessionAuth::id());
-                    Flash::add('success', 'Story created.');
-                }
 
                 return $response->withHeader('Location', '/admin/recipes/' . $recipeId . '/edit')->withStatus(302);
             },

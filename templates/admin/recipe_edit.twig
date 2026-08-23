@@ -26,10 +26,23 @@
         {% if recipe.origin %}<p><small>Origin: {{ recipe.origin }}</small></p>{% endif %}
     </section>
 
-    <section class="auth-form">
-        <h2>Recipe details</h2>
-        <form method="post" action="/admin/recipes/{{ recipe.id }}">
-            {% include 'partials/_csrf.twig' %}
+    {#
+        One form, one Save button, for everything that's "draft content an
+        admin fills in over time" -- details, the mundane truth, the
+        narrator + ritual recipe, and the Story. Previously each of those
+        was its own <form> with its own Save button, which meant leaving a
+        section without clicking its specific button silently lost that
+        section's edits. Tags (already auto-saves per pill via its own
+        widget -- see site.js), the Publish/Unpublish toggle (an immediate
+        status action, not draft content), and Delete (destructive, wants
+        its own confirm) deliberately stay outside this form as separate,
+        different kinds of action.
+    #}
+    <form method="post" action="/admin/recipes/{{ recipe.id }}">
+        {% include 'partials/_csrf.twig' %}
+
+        <section class="auth-form">
+            <h2>Recipe details</h2>
 
             <label for="slug">Slug</label>
             <input type="text" id="slug" name="slug" value="{{ recipe.slug }}"
@@ -38,79 +51,62 @@
             <label for="title">Title</label>
             <input type="text" id="title" name="title" value="{{ recipe.title }}"
                    required maxlength="255">
+        </section>
 
-            <label>
-                <input type="checkbox" name="published" value="1" {% if recipe.status == 'published' %}checked{% endif %}>
-                Published
-            </label>
+        <section class="auth-form">
+            <h2>Story</h2>
 
-            <button type="submit">Save details</button>
-        </form>
-    </section>
+            {#
+            One narrator per recipe, shared with the Story's "Told by"
+            credit below -- any narrator can narrate any recipe (the
+            dragon narrating a salad is fine), so this is a fixed
+            house-roster dropdown (App\Recipe\Narrators), not free text.
+            #}
+            <label for="narrator">Narrator</label>
+            <select id="narrator" name="narrator">
+                <option value=""{% if not recipe.narrator %} selected{% endif %}>- none selected -</option>
+                {% for name in narrators %}
+                    <option value="{{ name }}"{% if recipe.narrator == name %} selected{% endif %}>{{ name }}</option>
+                {% endfor %}
+            </select>
 
-    <section class="auth-form">
-        <h2>Ingredients &amp; Instructions <small>(the mundane truth)</small></h2>
-        <form method="post" action="/admin/recipes/{{ recipe.id }}/original">
-            {% include 'partials/_csrf.twig' %}
+            <textarea id="story_body" name="story_body" rows="10">{{ story.body|default('') }}</textarea>
+
+            {% if archivedStories|length %}
+                <details>
+                    <summary>Past versions ({{ archivedStories|length }})</summary>
+                    <ul>
+                        {% for archived in archivedStories %}
+                            <li>
+                                Archived {{ archived.archived_at }}
+                                <div class="story-body">{{ archived.body|nl2br }}</div>
+                            </li>
+                        {% endfor %}
+                    </ul>
+                </details>
+            {% endif %}
+        </section>
+
+        <section class="auth-form">
+            <h2>Narrator recipe <small>(the ritual-styled version)</small></h2>
+
+            <textarea id="narrator_recipe" name="narrator_recipe" rows="8">{{ recipe.narrator_recipe|default('') }}</textarea>
+        </section>
+
+        <section class="auth-form">
+            <h2>Ingredients &amp; Instructions <small>(the mundane truth)</small></h2>
 
             <label for="original_ingredients">Ingredients</label>
             <textarea id="original_ingredients" name="original_ingredients" rows="8">{{ recipe.original_ingredients }}</textarea>
 
             <label for="original_instructions">Instructions</label>
             <textarea id="original_instructions" name="original_instructions" rows="8">{{ recipe.original_instructions }}</textarea>
+        </section>
 
-            <button type="submit">Save</button>
-        </form>
-    </section>
-
-    <section class="auth-form">
-        <h2>Narrator recipe <small>(the ritual-styled version)</small></h2>
-        <form method="post" action="/admin/recipes/{{ recipe.id }}/narrator-recipe">
-            {% include 'partials/_csrf.twig' %}
-
-            <label for="narrator">Narrator</label>
-            <input type="text" id="narrator" name="narrator" value="{{ recipe.narrator|default('') }}"
-                   maxlength="255" placeholder="e.g. A dragon, A witch">
-
-            <label for="narrator_recipe">Narrator recipe</label>
-            <textarea id="narrator_recipe" name="narrator_recipe" rows="8">{{ recipe.narrator_recipe|default('') }}</textarea>
-
-            <button type="submit">Save</button>
-        </form>
-    </section>
-
-    <section class="auth-form">
-        <h2>
-            Story
-            {% if story %}<small>told by {{ story.narrator }}</small>{% else %}<small>none yet</small>{% endif %}
-        </h2>
-        <form method="post" action="/admin/recipes/{{ recipe.id }}/story">
-            {% include 'partials/_csrf.twig' %}
-
-            <label for="story_narrator">Narrator</label>
-            <input type="text" id="story_narrator" name="narrator" value="{{ story.narrator|default('') }}"
-                   required maxlength="255" placeholder="e.g. A dragon, A witch">
-
-            <label for="story_body">Story</label>
-            <textarea id="story_body" name="body" rows="10">{{ story.body|default('') }}</textarea>
-
-            <button type="submit">{{ story ? 'Save Story' : 'Create Story' }}</button>
-        </form>
-
-        {% if archivedStories|length %}
-            <details>
-                <summary>Past versions ({{ archivedStories|length }})</summary>
-                <ul>
-                    {% for archived in archivedStories %}
-                        <li>
-                            <strong>{{ archived.narrator }}</strong> &mdash; archived {{ archived.archived_at }}
-                            <div class="story-body">{{ archived.body|nl2br }}</div>
-                        </li>
-                    {% endfor %}
-                </ul>
-            </details>
-        {% endif %}
-    </section>
+        <section class="auth-form">
+            <button type="submit">Save changes</button>
+        </section>
+    </form>
 
     <section class="auth-form">
         <h2>Tags</h2>
