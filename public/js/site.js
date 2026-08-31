@@ -45,6 +45,49 @@
         });
     }
 
+    // ---- Landing page: explicit Light/Dark buttons + "Menu" dropdown ------
+    //
+    // The landing (templates/home.twig) has no header, so no #theme-toggle.
+    // Instead its "Menu" dropdown carries two buttons, data-set-theme="light"
+    // / "dark", which set the theme directly (rather than flipping it) and
+    // reuse the same applyTheme + STORAGE_KEY as the header toggle above.
+    var setThemeButtons = document.querySelectorAll('[data-set-theme]');
+
+    function reflectActiveTheme() {
+        var active = currentTheme();
+        Array.prototype.forEach.call(setThemeButtons, function (button) {
+            button.setAttribute(
+                'aria-pressed',
+                button.getAttribute('data-set-theme') === active ? 'true' : 'false'
+            );
+        });
+    }
+
+    if (setThemeButtons.length) {
+        reflectActiveTheme();
+        Array.prototype.forEach.call(setThemeButtons, function (button) {
+            button.addEventListener('click', function () {
+                var mode = button.getAttribute('data-set-theme');
+                applyTheme(mode);
+                try {
+                    window.localStorage.setItem(STORAGE_KEY, mode);
+                } catch (e) {
+                    // Ignore -- theme just won't persist across visits.
+                }
+                reflectActiveTheme();
+            });
+        });
+    }
+
+    // Native <details> stays open on outside click -- close it, so the
+    // landing "Menu" behaves like a menu.
+    document.addEventListener('click', function (event) {
+        var openMenu = document.querySelector('details.landing-menu[open]');
+        if (openMenu && !openMenu.contains(event.target)) {
+            openMenu.removeAttribute('open');
+        }
+    });
+
     // ---- Shared: CSRF token rotation after an AJAX POST --------------------
     //
     // slim/csrf tokens are single-use (Guard deletes a token from its pool

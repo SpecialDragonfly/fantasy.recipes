@@ -1,15 +1,112 @@
-{% extends 'layout.twig' %}
+{#
+  The landing page is deliberately NOT built on layout.twig: it has no
+  site-header nav (that space is the hero instead), the hero + card grid
+  fill the viewport edge to edge, and the only navigation is the "Menu"
+  dropdown top-right. Every other page keeps layout.twig and its header.
 
-{% block title %}fantasy.recipes{% endblock %}
+  The card frame is .landing-card -- a <div> for the plain cards, the
+  <form> itself for Logout. Inside sits .landing-card-body: an <a href>, or
+  the <button type="submit"> for Logout. The frame takes the flex-item
+  stretch; the body fills it and stacks the art + label. Same shape either
+  way.
 
-{% block content %}
-    <section class="hero">
-        <h1>fantasy.recipes</h1>
-        <p>
-            Every recipe here is an in-world ritual, told by whoever came to
-            make it &mdash; a witch, a dragon, or worse. The mundane truth is
-            always one click away, if you insist on it.
-        </p>
-        <p><a class="button" href="/recipes">Browse the recipes</a></p>
-    </section>
-{% endblock %}
+  Card / menu visibility:
+   - Recipes, Writers: always.
+   - Grimoire: only when logged in (it's a User-tier feature).
+   - Admin: only for a logged-in admin.
+   - Login (guest) <-> Logout (logged in).
+#}
+<!doctype html>
+<html lang="en">
+<head>
+    <meta charset="utf-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1">
+    <title>fantasy.recipes</title>
+    <link rel="stylesheet" href="/css/site.css?v={{ asset_version }}">
+</head>
+<body class="landing">
+    <header class="landing-hero">
+        <h1>Fantasy Recipes</h1>
+
+        <details class="landing-menu">
+            <summary>Menu</summary>
+            <div class="landing-menu-panel">
+                <a href="/recipes">Recipes</a>
+                <a href="/writers">Writers</a>
+                {% if current_user %}
+                    <a href="/grimoire">Grimoire</a>
+                {% endif %}
+                {% if current_user and current_user.role == 'admin' %}
+                    <a href="/admin">Admin</a>
+                {% endif %}
+                {% if current_user %}
+                    <form class="landing-menu-logout" method="post" action="/logout">
+                        {% include 'partials/_csrf.twig' %}
+                        <button type="submit">Logout</button>
+                    </form>
+                {% else %}
+                    <a href="/login">Login</a>
+                {% endif %}
+                <div class="landing-menu-theme" role="group" aria-label="Theme">
+                    <button type="button" data-set-theme="light">Light</button>
+                    <button type="button" data-set-theme="dark">Dark</button>
+                </div>
+            </div>
+        </details>
+    </header>
+
+    <main class="landing-cards">
+        <div class="landing-card">
+            <a class="landing-card-body" href="/recipes">
+                <span class="landing-card-art landing-art-recipes" aria-hidden="true">🍲</span>
+                <span class="landing-card-name">Recipes</span>
+            </a>
+        </div>
+        <div class="landing-card">
+            <a class="landing-card-body" href="/writers">
+                <span class="landing-card-art landing-art-writers" aria-hidden="true">✒️</span>
+                <span class="landing-card-name">Writers</span>
+            </a>
+        </div>
+        {% if current_user %}
+        <div class="landing-card">
+            <a class="landing-card-body" href="/grimoire">
+                <span class="landing-card-art landing-art-grimoire" aria-hidden="true">📖</span>
+                <span class="landing-card-name">Grimoire</span>
+            </a>
+        </div>
+        {% endif %}
+        {% if current_user and current_user.role == 'admin' %}
+        <div class="landing-card">
+            <a class="landing-card-body" href="/admin">
+                <span class="landing-card-art landing-art-admin" aria-hidden="true">⚙️</span>
+                <span class="landing-card-name">Admin</span>
+            </a>
+        </div>
+        {% endif %}
+        {% if current_user %}
+        <form class="landing-card" method="post" action="/logout">
+            {% include 'partials/_csrf.twig' %}
+            <button class="landing-card-body" type="submit">
+                <span class="landing-card-art landing-art-login" aria-hidden="true">🚪</span>
+                <span class="landing-card-name">Logout</span>
+            </button>
+        </form>
+        {% else %}
+        <div class="landing-card">
+            <a class="landing-card-body" href="/login">
+                <span class="landing-card-art landing-art-login" aria-hidden="true">🔑</span>
+                <span class="landing-card-name">Login</span>
+            </a>
+        </div>
+        {% endif %}
+    </main>
+
+    <footer class="site-footer">
+        <p>fantasy.recipes &mdash; every recipe is a ritual.</p>
+        <p><a href="/terms">Terms &amp; conditions</a></p>
+    </footer>
+
+    <script src="/js/site.js?v={{ asset_version }}" defer></script>
+</body>
+</html>

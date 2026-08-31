@@ -18,13 +18,36 @@
  * No web fonts / CDN (Pi target, offline-capable) -- serif system-font
  * stacks throughout, chosen for an old-book/carved-signage feel over the
  * default Georgia-everywhere placeholder.
+ *
+ * One exception to "system fonts only": Silkscreen (the pixel display face
+ * used for the landing wordmark and card labels -- templates/home.twig).
+ * Self-hosted as woff2 under public/fonts/ -- NOT a CDN link -- so the
+ * offline/Pi constraint still holds. Silkscreen is (c) Jason Kottke, SIL
+ * Open Font License 1.1; the files are the Latin subset from Google Fonts.
  */
+
+@font-face {
+    font-family: 'Silkscreen';
+    font-style: normal;
+    font-weight: 400;
+    font-display: swap;
+    src: url('/fonts/silkscreen-400.woff2') format('woff2');
+}
+
+@font-face {
+    font-family: 'Silkscreen';
+    font-style: normal;
+    font-weight: 700;
+    font-display: swap;
+    src: url('/fonts/silkscreen-700.woff2') format('woff2');
+}
 
 :root {
     color-scheme: light dark;
 
     --font-heading: 'Iowan Old Style', 'Palatino Linotype', Palatino, Optima, 'Book Antiqua', Georgia, serif;
     --font-body: Georgia, Cambria, 'Times New Roman', Times, serif;
+    --font-pixel: 'Silkscreen', 'Courier New', monospace;
 
     /* ---- Light: timber frame + parchment ---- */
     --bg: #e9dcc3;
@@ -972,4 +995,277 @@ button.tag-picker-save[hidden] {
     background: var(--bg);
     font-size: 0.85rem;
     line-height: 1.5;
+}
+
+/* ==== Landing page (templates/home.twig) ============================
+   Standalone page, not layout.twig: no site-header, a full-bleed hero
+   with the wordmark + a "Menu" dropdown top-right, then a row of cards
+   filling the rest of the fold, then the shared .site-footer. All tokens
+   (--bg, --panel-*, --frame-*, --accent*) come from the palette blocks at
+   the top of this file, so light/dark and the theme toggle already work. */
+
+/* Hero: top third, pixel wordmark, no chrome above it. */
+.landing-hero {
+    position: relative;
+    flex: 0 0 33vh;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    padding: 1rem;
+    border-bottom: 1px solid var(--panel-border);
+}
+
+.landing-hero h1 {
+    margin: 0;
+    font-family: var(--font-pixel);
+    font-weight: 700;
+    text-transform: uppercase;
+    white-space: nowrap;
+    text-align: center;
+    letter-spacing: 0.02em;
+    font-size: clamp(2.95rem, 17.2vw, 5.25rem);
+    text-shadow: 3px 3px 0 rgba(0, 0, 0, 0.14);
+}
+
+/* "Menu" dropdown, top-right of the hero -- native <details>, no JS needed
+   to open it (site.js only wires the theme buttons + outside-click close). */
+.landing-menu {
+    position: absolute;
+    top: 0.9rem;
+    right: 1rem;
+    z-index: 10;
+    font-family: var(--font-pixel);
+}
+
+.landing-menu > summary {
+    list-style: none;
+    cursor: pointer;
+    user-select: none;
+    text-transform: uppercase;
+    letter-spacing: 0.08em;
+    font-size: 0.72rem;
+    padding: 0.5rem 0.8rem;
+    border: 1px solid var(--panel-border);
+    border-radius: 7px;
+    background: var(--panel-bg);
+    color: var(--panel-text);
+    box-shadow: var(--panel-shadow);
+}
+
+.landing-menu > summary::-webkit-details-marker { display: none; }
+.landing-menu > summary::after { content: " \25BE"; opacity: 0.7; }
+.landing-menu[open] > summary::after { content: " \25B4"; }
+
+.landing-menu-panel {
+    position: absolute;
+    right: 0;
+    margin-top: 0.4rem;
+    min-width: 11rem;
+    display: flex;
+    flex-direction: column;
+    gap: 0.1rem;
+    padding: 0.4rem;
+    background: var(--panel-bg);
+    color: var(--panel-text);
+    border: 1px solid var(--panel-border);
+    border-radius: 8px;
+    box-shadow: var(--panel-shadow);
+}
+
+.landing-menu-panel a {
+    text-decoration: none;
+    color: var(--panel-text);
+    text-transform: uppercase;
+    letter-spacing: 0.05em;
+    font-size: 0.72rem;
+    padding: 0.55rem 0.6rem;
+    border-radius: 5px;
+}
+
+.landing-menu-panel a:hover,
+.landing-menu-panel a:focus-visible {
+    background: var(--accent);
+    color: var(--accent-text);
+    outline: none;
+}
+
+/* Logout menu item: a POST form (CSRF). display:contents so its <button>
+   sits in the panel's column exactly like the <a> items and matches them. */
+.landing-menu-logout {
+    display: contents;
+}
+
+.landing-menu-logout button {
+    width: 100%;
+    font-family: inherit;
+    font-size: 0.72rem;
+    text-align: left;
+    text-transform: uppercase;
+    letter-spacing: 0.05em;
+    padding: 0.55rem 0.6rem;
+    border: 0;
+    border-radius: 5px;
+    cursor: pointer;
+    color: var(--panel-text);
+    background: transparent;
+}
+
+.landing-menu-logout button:hover,
+.landing-menu-logout button:focus-visible {
+    background: var(--accent);
+    color: var(--accent-text);
+    outline: none;
+}
+
+.landing-menu-theme {
+    display: flex;
+    gap: 0.25rem;
+    margin-top: 0.35rem;
+    padding-top: 0.45rem;
+    border-top: 1px solid var(--panel-border);
+}
+
+.landing-menu-theme button {
+    flex: 1;
+    font-family: inherit;
+    font-size: 0.58rem;
+    text-transform: uppercase;
+    letter-spacing: 0.03em;
+    padding: 0.4rem 0.15rem;
+    cursor: pointer;
+    color: var(--panel-text);
+    background: transparent;
+    border: 1px solid var(--panel-border);
+    border-radius: 4px;
+}
+
+.landing-menu-theme button[aria-pressed="true"] {
+    background: var(--accent);
+    color: var(--accent-text);
+    border-color: var(--accent);
+}
+
+/* Card row: fills the rest of the fold. */
+.landing-cards {
+    flex: 1 1 auto;
+    display: flex;
+    gap: clamp(0.6rem, 2vw, 1.75rem);
+    padding: clamp(1rem, 3.5vh, 2.75rem) clamp(1rem, 4vw, 3rem);
+    align-items: stretch;
+    justify-content: center;
+}
+
+/* Quick-reference "cards" -- image + one word, nothing else (the brief's
+   Magic-the-Gathering-card reference). The textured frame is deliberate
+   here (decorative surround, not body copy), same as .site-header/.footer.
+
+   .landing-card is just the frame: a <div> that takes the flex-item
+   stretch cleanly (a <button> in that slot does not, across browsers).
+   Inside it, .landing-card-body -- an <a>, or a <form> wrapping a
+   <button> for the POST-only Logout -- fills the frame and stacks the
+   art + label. Same rule for all three so Login and Logout are identical
+   bar the wrapper element. */
+.landing-card {
+    flex: 1 1 0;
+    max-width: 300px;
+    min-width: 0;
+    display: flex;
+    padding: 10px;
+    border: 2px solid var(--frame-border);
+    border-radius: 16px;
+    background: var(--frame-texture);
+    box-shadow: var(--panel-shadow);
+    transition: transform 0.13s ease, box-shadow 0.13s ease;
+}
+
+.landing-card:hover,
+.landing-card:focus-within {
+    transform: translateY(-8px);
+    box-shadow: var(--panel-shadow), 0 14px 28px rgba(0, 0, 0, 0.35);
+}
+
+/* Descendant selector (not just .landing-card-body) so this outweighs the
+   global `button:not(.link-button)` rule -- otherwise the Logout <button>
+   picks up that rule's accent gradient, 999px pill and padding instead of
+   looking like the <a> cards. */
+.landing-card .landing-card-body {
+    flex: 1;
+    min-width: 0;
+    display: flex;
+    flex-direction: column;
+    font: inherit;
+    text-align: inherit;
+    text-decoration: none;
+    color: var(--frame-text);
+    background: transparent;
+    border: 0;
+    border-radius: 10px;
+    margin: 0;
+    padding: 0;
+    box-shadow: none;
+    cursor: pointer;
+}
+
+.landing-card .landing-card-body:focus-visible {
+    outline: 2px solid var(--accent);
+    outline-offset: 4px;
+}
+
+.landing-card .landing-card-body:hover {
+    filter: none;
+}
+
+/* Card "art" -- placeholder gradients + an emoji, one identity per card.
+   TODO: swap for real illustration when it exists. */
+.landing-card-art {
+    flex: 1 1 auto;
+    min-height: 0;
+    border: 1px solid var(--frame-border);
+    border-radius: 10px;
+    margin-bottom: 10px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    font-size: clamp(2.5rem, 7vw, 4.5rem);
+    filter: drop-shadow(0 3px 6px rgba(0, 0, 0, 0.4));
+}
+
+.landing-art-recipes  { background: radial-gradient(circle at 50% 35%, #f0a24d, #7a2f10 75%); }
+.landing-art-writers  { background: radial-gradient(circle at 50% 35%, #6f7fc0, #23264d 75%); }
+.landing-art-grimoire { background: radial-gradient(circle at 50% 35%, #5aa06a, #1d3b2a 75%); }
+.landing-art-admin    { background: radial-gradient(circle at 50% 35%, #b06fc0, #3a1d4d 75%); }
+.landing-art-login    { background: radial-gradient(circle at 50% 35%, #d8b45a, #5b4412 75%); }
+
+.landing-card-name {
+    font-family: var(--font-pixel);
+    text-align: center;
+    text-transform: uppercase;
+    letter-spacing: 0.05em;
+    font-size: clamp(0.7rem, 1.5vw, 1rem);
+    padding: 0.55rem 0.4rem;
+    background: var(--panel-bg);
+    color: var(--panel-text);
+    border: 1px solid var(--panel-border);
+    border-radius: 8px;
+}
+
+/* Narrow screens: cards wrap to a grid, hero relaxes its fixed third. */
+@media (max-width: 720px) {
+    .landing-hero {
+        flex-basis: auto;
+        min-height: 30vh;
+    }
+
+    .landing-cards {
+        flex-wrap: wrap;
+    }
+
+    .landing-card {
+        flex-basis: calc(50% - 0.9rem);
+        max-width: none;
+    }
+
+    .landing-card-art {
+        min-height: 22vh;
+    }
 }
