@@ -14,9 +14,11 @@ final class CreateGrimoireEntriesTable extends AbstractMigration
 {
     public function change(): void
     {
+        // signed => false: FK columns onto the unsigned default `id` PKs of
+        // users/recipes -- mismatch fails addForeignKey on MySQL (errno 150).
         $this->table('grimoire_entries', ['id' => false, 'primary_key' => ['user_id', 'recipe_id']])
-            ->addColumn('user_id', 'integer')
-            ->addColumn('recipe_id', 'integer')
+            ->addColumn('user_id', 'integer', ['signed' => false])
+            ->addColumn('recipe_id', 'integer', ['signed' => false])
             ->addColumn('created_at', 'datetime')
             ->addForeignKey('user_id', 'users', 'id', ['delete' => 'CASCADE'])
             ->addForeignKey('recipe_id', 'recipes', 'id', ['delete' => 'CASCADE'])

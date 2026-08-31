@@ -55,7 +55,9 @@ final class CreateRecipesTable extends AbstractMigration
             ->addColumn('original_instructions', 'text')
             ->addColumn('narrator', 'text', ['null' => true])
             ->addColumn('narrator_recipe', 'text', ['null' => true])
-            ->addColumn('story_id', 'integer', ['null' => true])
+            // Not a real FK (see below), but holds stories.id values, so
+            // keep it the same unsigned type as every other *_id column.
+            ->addColumn('story_id', 'integer', ['null' => true, 'signed' => false])
             // 'draft' | 'published' -- VARCHAR not ENUM, same portability
             // reasoning as every other status column in this project (see
             // architecture.md -- Testing Strategy).

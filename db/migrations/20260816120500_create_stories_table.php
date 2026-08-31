@@ -28,11 +28,14 @@ final class CreateStoriesTable extends AbstractMigration
 {
     public function change(): void
     {
+        // *_id columns are unsigned to match Phinx's default `id` PK type on
+        // MySQL; a signed/unsigned mismatch fails addForeignKey with
+        // errno 150 (SQLite ignores signedness, so the local suite passed).
         $this->table('stories', ['id' => 'id'])
-            ->addColumn('recipe_id', 'integer')
+            ->addColumn('recipe_id', 'integer', ['signed' => false])
             ->addColumn('narrator', 'string', ['limit' => 255])
             ->addColumn('body', 'text')
-            ->addColumn('author_user_id', 'integer', ['null' => true])
+            ->addColumn('author_user_id', 'integer', ['null' => true, 'signed' => false])
             ->addColumn('created_at', 'datetime')
             ->addColumn('archived_at', 'datetime', ['null' => true])
             ->addIndex(['recipe_id'])

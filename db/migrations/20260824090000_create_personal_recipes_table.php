@@ -32,7 +32,9 @@ final class CreatePersonalRecipesTable extends AbstractMigration
     public function change(): void
     {
         $this->table('personal_recipes', ['id' => 'id'])
-            ->addColumn('user_id', 'integer')
+            // signed => false to match users.id (unsigned Phinx default) --
+            // otherwise addForeignKey fails on MySQL with errno 150.
+            ->addColumn('user_id', 'integer', ['signed' => false])
             ->addColumn('title', 'string', ['limit' => 255])
             ->addColumn('ingredients', 'text')
             ->addColumn('instructions', 'text')
