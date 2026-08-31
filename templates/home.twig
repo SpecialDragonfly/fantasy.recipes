@@ -1,15 +1,77 @@
-{% extends 'layout.twig' %}
+{#
+  The landing page is deliberately NOT built on layout.twig: it has no
+  site-header nav (that space is the hero instead), the hero + card grid
+  fill the viewport edge to edge, and the only navigation is the "Menu"
+  dropdown top-right. Every other page keeps layout.twig and its header.
+#}
+<!doctype html>
+<html lang="en">
+<head>
+    <meta charset="utf-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1">
+    <title>fantasy.recipes</title>
+    <link rel="stylesheet" href="/css/site.css?v={{ asset_version }}">
+    {#
+      Pixel headline face. TODO: self-host as a woff2 under public/fonts/ to
+      honour the "no web fonts / CDN" constraint (architecture.md -- Stack
+      Overview); served from Google Fonts for now.
+    #}
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Silkscreen:wght@400;700&display=swap" rel="stylesheet">
+</head>
+<body class="landing">
+    <header class="landing-hero">
+        <h1>Fantasy Recipes</h1>
 
-{% block title %}fantasy.recipes{% endblock %}
+        <details class="landing-menu">
+            <summary>Menu</summary>
+            <div class="landing-menu-panel">
+                <a href="/recipes">Recipes</a>
+                <a href="/writers">Writers</a>
+                <a href="/grimoire">Grimoire</a>
+                {% if current_user and current_user.role == 'admin' %}
+                    <a href="/admin">Admin</a>
+                {% endif %}
+                <a href="/login">Login</a>
+                <div class="landing-menu-theme" role="group" aria-label="Theme">
+                    <button type="button" data-set-theme="light">Light</button>
+                    <button type="button" data-set-theme="dark">Dark</button>
+                </div>
+            </div>
+        </details>
+    </header>
 
-{% block content %}
-    <section class="hero">
-        <h1>fantasy.recipes</h1>
-        <p>
-            Every recipe here is an in-world ritual, told by whoever came to
-            make it &mdash; a witch, a dragon, or worse. The mundane truth is
-            always one click away, if you insist on it.
-        </p>
-        <p><a class="button" href="/recipes">Browse the recipes</a></p>
-    </section>
-{% endblock %}
+    <main class="landing-cards">
+        <a class="landing-card" href="/recipes">
+            <span class="landing-card-art landing-art-recipes" aria-hidden="true">🍲</span>
+            <span class="landing-card-name">Recipes</span>
+        </a>
+        <a class="landing-card" href="/writers">
+            <span class="landing-card-art landing-art-writers" aria-hidden="true">✒️</span>
+            <span class="landing-card-name">Writers</span>
+        </a>
+        <a class="landing-card" href="/grimoire">
+            <span class="landing-card-art landing-art-grimoire" aria-hidden="true">📖</span>
+            <span class="landing-card-name">Grimoire</span>
+        </a>
+        {% if current_user and current_user.role == 'admin' %}
+        <a class="landing-card" href="/admin">
+            <span class="landing-card-art landing-art-admin" aria-hidden="true">⚙️</span>
+            <span class="landing-card-name">Admin</span>
+        </a>
+        {% endif %}
+        <a class="landing-card" href="/login">
+            <span class="landing-card-art landing-art-login" aria-hidden="true">🔑</span>
+            <span class="landing-card-name">Login</span>
+        </a>
+    </main>
+
+    <footer class="site-footer">
+        <p>fantasy.recipes &mdash; every recipe is a ritual.</p>
+        <p><a href="/terms">Terms &amp; conditions</a></p>
+    </footer>
+
+    <script src="/js/site.js?v={{ asset_version }}" defer></script>
+</body>
+</html>
