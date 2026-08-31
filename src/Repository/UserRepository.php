@@ -11,7 +11,7 @@ use PDO;
  * Thin PDO repository, no ORM -- see architecture.md -- Application
  * Architecture (Data layer).
  *
- * @phpstan-type UserRow array{id: int, username: string, email: string, password_hash: string, role: string, created_at: string, marketing_opt_in: int, marketing_opt_in_at: string|null, unsubscribe_token: string|null}
+ * @phpstan-type UserRow array{id: int, username: string, email: string, password_hash: string, role: string, created_at: string, last_login_at: string|null, marketing_opt_in: int, marketing_opt_in_at: string|null, unsubscribe_token: string|null}
  */
 final class UserRepository
 {
@@ -59,6 +59,20 @@ final class UserRepository
         $row = $statement->fetch();
 
         return $row === false ? null : $row;
+    }
+
+    /**
+     * Every account, newest signup first -- the admin users page
+     * (templates/admin/users.twig).
+     *
+     * @return list<UserRow>
+     */
+    public function all(): array
+    {
+        $statement = $this->pdo->query('SELECT * FROM users ORDER BY created_at DESC, id DESC');
+
+        /** @var list<UserRow> */
+        return $statement === false ? [] : $statement->fetchAll();
     }
 
     /**
@@ -156,5 +170,31 @@ final class UserRepository
             'password_hash' => password_hash($newPassword, PASSWORD_DEFAULT),
             'id' => $userId,
         ]);
+    }
+
+    /**
+     * Stamp the last-authenticated time. Called from the login route on
+     * every successful sign-in (see src/Routes/auth.php).
+     */
+    public function touchLastLogin(int $userId): void
+    {
+        $statement = $this->pdo->prepare('UPDATE users SET last_login_at = :now WHERE id = :id');
+        $statement->execute([
+            'now' => (new DateTimeImmutable())->format('Y-m-d H:i:s'),
+            'id' => $userId,
+        ]);
+    }
+
+    /**
+     * Hard delete, from the admin users page. The user's own rows go with
+     * them via ON DELETE CASCADE (password_reset_tokens, grimoire_entries,
+     * personal_recipes, recipe_email_queue_deliveries); any Story they
+     * authored survives with author_user_id set to NULL (see the
+     * migrations).
+     */
+    public function delete(int $userId): void
+    {
+        $statement = $this->pdo->prepare('DELETE FROM users WHERE id = :id');
+        $statement->execute(['id' => $userId]);
     }
 }

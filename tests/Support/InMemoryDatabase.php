@@ -52,6 +52,7 @@ final class InMemoryDatabase
                 password_hash VARCHAR(255) NOT NULL,
                 role VARCHAR(16) NOT NULL DEFAULT \'user\',
                 created_at DATETIME NOT NULL,
+                last_login_at DATETIME,
                 marketing_opt_in BOOLEAN NOT NULL DEFAULT 0,
                 marketing_opt_in_at DATETIME,
                 unsubscribe_token VARCHAR(32),

@@ -536,6 +536,49 @@ return function (App $app): void {
             },
         );
 
+        // --- Users ----------------------------------------------------------
+        //
+        // Read + hard-delete only. No edit UI (roles are still promoted by
+        // hand in the DB -- see the note at the top of this file). Delete
+        // cascades the user's own rows and NULLs any Story authorship; see
+        // UserRepository::delete().
+
+        $group->get('/users', function (Request $request, Response $response) use ($container): Response {
+            /** @var UserRepository $users */
+            $users = $container->get(UserRepository::class);
+
+            return Twig::fromRequest($request)->render($response, 'admin/users.twig', [
+                'users' => $users->all(),
+                'current_user_id' => SessionAuth::id(),
+            ]);
+        });
+
+        $group->post(
+            '/users/{id}/delete',
+            function (Request $request, Response $response, array $args) use ($container): Response {
+                $userId = (int) $args['id'];
+
+                if ($userId === SessionAuth::id()) {
+                    Flash::add('error', 'You cannot delete your own account.');
+
+                    return $response->withHeader('Location', '/admin/users')->withStatus(302);
+                }
+
+                /** @var UserRepository $users */
+                $users = $container->get(UserRepository::class);
+                $user = $users->findById($userId);
+
+                if ($user === null) {
+                    Flash::add('error', 'No such user.');
+                } else {
+                    $users->delete($userId);
+                    Flash::add('info', sprintf('Deleted %s.', $user['username']));
+                }
+
+                return $response->withHeader('Location', '/admin/users')->withStatus(302);
+            },
+        );
+
         // --- Tags -------------------------------------------------------------
         //
         // Merge/dedupe tooling is explicitly out of scope (spec.md -- Domain

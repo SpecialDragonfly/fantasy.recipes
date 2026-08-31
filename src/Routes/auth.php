@@ -69,6 +69,7 @@ return function (App $app): void {
 
         if ($user !== null) {
             SessionAuth::login($user);
+            $userRepository->touchLastLogin($userId);
         }
 
         Flash::add('success', sprintf('Welcome to fantasy.recipes, %s.', $username));
@@ -105,6 +106,7 @@ return function (App $app): void {
         }
 
         SessionAuth::login($user);
+        $userRepository->touchLastLogin((int) $user['id']);
         Flash::add('success', sprintf('Welcome back, %s.', $user['username']));
 
         $redirectTo = '/';

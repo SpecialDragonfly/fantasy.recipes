@@ -6,15 +6,18 @@ namespace App\Tests\Unit\Repository;
 
 use App\Repository\UserRepository;
 use App\Tests\Support\InMemoryDatabase;
+use PDO;
 use PHPUnit\Framework\TestCase;
 
 final class UserRepositoryTest extends TestCase
 {
+    private PDO $pdo;
     private UserRepository $repository;
 
     protected function setUp(): void
     {
-        $this->repository = new UserRepository(InMemoryDatabase::create());
+        $this->pdo = InMemoryDatabase::create();
+        $this->repository = new UserRepository($this->pdo);
     }
 
     public function testCreateDefaultsToUserRoleAndHashesPassword(): void
@@ -135,5 +138,54 @@ final class UserRepositoryTest extends TestCase
         self::assertNotNull($found);
         self::assertSame($id, (int) $found['id']);
         self::assertNull($this->repository->findByUnsubscribeToken('deadbeef'));
+    }
+
+    public function testAllReturnsEveryAccountNewestSignupFirst(): void
+    {
+        $this->pdo->exec("INSERT INTO users (username, email, password_hash, created_at) VALUES ('old', 'old@example.com', 'x', '2026-01-01 09:00:00')");
+        $this->pdo->exec("INSERT INTO users (username, email, password_hash, created_at) VALUES ('new', 'new@example.com', 'x', '2026-08-01 09:00:00')");
+
+        $usernames = array_column($this->repository->all(), 'username');
+
+        self::assertSame(['new', 'old'], $usernames);
+    }
+
+    public function testTouchLastLoginStampsTheTimeOnlyForThatUser(): void
+    {
+        $a = $this->repository->create('a', 'a@example.com', 'password123');
+        $b = $this->repository->create('b', 'b@example.com', 'password123');
+
+        $before = $this->repository->findById($a);
+        self::assertNotNull($before);
+        self::assertNull($before['last_login_at']);
+
+        $this->repository->touchLastLogin($a);
+
+        $after = $this->repository->findById($a);
+        self::assertNotNull($after);
+        self::assertNotNull($after['last_login_at']);
+
+        $untouched = $this->repository->findById($b);
+        self::assertNotNull($untouched);
+        self::assertNull($untouched['last_login_at']);
+    }
+
+    public function testDeleteRemovesTheUserAndCascadesTheirRows(): void
+    {
+        $id = $this->repository->create('doomed', 'doomed@example.com', 'password123');
+        $this->pdo->exec(sprintf(
+            "INSERT INTO password_reset_tokens (user_id, token_hash, expires_at, created_at) VALUES (%d, 'h', '2099-01-01 00:00:00', '2026-01-01 00:00:00')",
+            $id,
+        ));
+
+        $this->repository->delete($id);
+
+        self::assertNull($this->repository->findById($id));
+
+        $count = $this->pdo->query(
+            sprintf('SELECT COUNT(*) FROM password_reset_tokens WHERE user_id = %d', $id),
+        );
+        self::assertNotFalse($count);
+        self::assertSame(0, (int) $count->fetchColumn());
     }
 }

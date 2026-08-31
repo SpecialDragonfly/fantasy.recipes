@@ -190,9 +190,14 @@ Implementation-level additions:
   (UK GDPR/PECR); `marketing_opt_in_at` records when consent was last
   given so it can be demonstrated, and is nulled on opt-out. Every user
   gets an `unsubscribe_token` (generated in `UserRepository::create`) for
-  a future no-login opt-out link — the marketing email itself, and the
-  route that consumes the token, aren't built yet. Data is not shared with
-  third parties.
+  the no-login opt-out link carried in every recipe-notification email
+  (`/unsubscribe`). Data is not shared with third parties.
+- `users.last_login_at` (nullable, migration `20260831…`): stamped by
+  `UserRepository::touchLastLogin()` from the login route on every
+  successful sign-in (password login + the auto-login after registration).
+  No backfill — pre-existing accounts read as "never" until next sign-in.
+  Shown on the admin users page (`/admin/users`), a read + hard-delete-only
+  view; delete cascades the user's own rows and NULLs any Story authorship.
 
 ---
 
