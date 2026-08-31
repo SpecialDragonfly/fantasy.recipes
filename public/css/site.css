@@ -240,8 +240,13 @@ main {
     z-index: 30;
     font-family: var(--font-pixel);
     font-size: clamp(1rem, 1.2vw, 3.2rem);
-    text-transform: lowercase;
     letter-spacing: 0.02em;
+    padding: 0.2rem 0;
+    /* delineate: a brown rule top and bottom (--frame-border, the site's
+       frame colour -- brown in light, slate in dark like every other frame
+       border). */
+    border-top: 2px solid var(--frame-border);
+    border-bottom: 2px solid var(--frame-border);
     text-decoration: none;
     color: var(--text);
 }
