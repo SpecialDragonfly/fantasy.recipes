@@ -73,12 +73,14 @@
         </a>
         {% endif %}
         {% if current_user %}
-        <form class="landing-card-form" method="post" action="/logout">
+        {# The <form> itself is the card (forms flex reliably; <button>
+           doesn't). The submit button is an invisible full-bleed overlay,
+           so the markup that shows is the same spans as the <a> cards. #}
+        <form class="landing-card landing-card-logout" method="post" action="/logout">
             {% include 'partials/_csrf.twig' %}
-            <button type="submit" class="landing-card">
-                <span class="landing-card-art landing-art-login" aria-hidden="true">🚪</span>
-                <span class="landing-card-name">Logout</span>
-            </button>
+            <span class="landing-card-art landing-art-login" aria-hidden="true">🚪</span>
+            <span class="landing-card-name">Logout</span>
+            <button type="submit" class="landing-card-submit">Logout</button>
         </form>
         {% else %}
         <a class="landing-card" href="/login">

@@ -1096,6 +1096,7 @@ button.tag-picker-save[hidden] {
 }
 
 .landing-menu-logout button {
+    width: 100%;
     font-family: inherit;
     font-size: 0.72rem;
     text-align: left;
@@ -1180,16 +1181,34 @@ button.tag-picker-save[hidden] {
     outline: none;
 }
 
-/* The Logout card is a POST form (CSRF), not a link. display:contents drops
-   the <form> from layout so its <button>.landing-card is the actual flex
-   card, visually identical to the <a> cards. */
-.landing-card-form {
-    display: contents;
+/* The Logout card is a POST form (CSRF). The <form> is the card itself --
+   same .landing-card flex box, same child spans as the <a> cards -- and the
+   submit control is an invisible button stretched over the whole thing.
+   (<button> is not reliable as a flex container across browsers, so it
+   can't wear .landing-card directly.) */
+.landing-card-logout {
+    position: relative;
+    margin: 0;
 }
 
-button.landing-card {
-    font-family: inherit;
+.landing-card-submit {
+    position: absolute;
+    inset: 0;
+    width: 100%;
+    height: 100%;
+    margin: 0;
+    padding: 0;
+    border: 0;
+    background: transparent;
+    color: transparent;
+    font: inherit;
     cursor: pointer;
+}
+
+.landing-card-submit:focus-visible {
+    outline: 2px solid var(--accent);
+    outline-offset: 3px;
+    border-radius: 16px;
 }
 
 /* Card "art" -- placeholder gradients + an emoji, one identity per card.
