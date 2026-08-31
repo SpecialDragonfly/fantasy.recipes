@@ -1,0 +1,14 @@
+{#
+  Favicons / touch icon / web app manifest. Asset set lives in
+  public/images/favicon/ (generated from the Silkscreen wordmark). Included
+  from both <head>s -- layout.twig and the standalone home.twig.
+
+  theme-color is split by scheme to match site.css's --bg in each theme.
+#}
+<link rel="icon" href="/images/favicon/favicon.ico" sizes="any">
+<link rel="icon" type="image/png" sizes="16x16" href="/images/favicon/favicon-16x16.png">
+<link rel="icon" type="image/png" sizes="32x32" href="/images/favicon/favicon-32x32.png">
+<link rel="apple-touch-icon" href="/images/favicon/apple-touch-icon.png">
+<link rel="manifest" href="/images/favicon/site.webmanifest">
+<meta name="theme-color" content="#e9dcc3" media="(prefers-color-scheme: light)">
+<meta name="theme-color" content="#202126" media="(prefers-color-scheme: dark)">
