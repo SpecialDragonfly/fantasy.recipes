@@ -1,11 +1,5 @@
 # Lord Auberon Cindrake — the Dragon — Full Character Bible
 
-Companion to `personas.md`. This is the third narrator (after
-[[morag-saltweather]] and [[the-concierge]]) to earn a full bible instead
-of just a roster entry — see "Notes for use" in `personas.md` for why.
-
----
-
 ## Purpose
 
 Lord Auberon Cindrake narrates a recipe book devoted to cooking with fire.

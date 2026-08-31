@@ -27,6 +27,37 @@
                 </p>
             {% endif %}
 
+            {#
+                Bookmark toggle -- Grimoire is a logged-in-User privilege
+                (spec.md -- Roles & Permissions), so a guest gets a login
+                prompt instead of the button. return_to sends the add/remove
+                POST back to this same recipe page (grimoireReturnTo() in
+                user.php) rather than the default /grimoire, so bookmarking
+                mid-read doesn't yank the reader away from the recipe.
+            #}
+            {% if current_user %}
+                <p class="grimoire-toggle">
+                    {% if inGrimoire %}
+                        <form method="post" action="/grimoire/{{ recipe.id }}/remove" class="inline-form">
+                            {% include 'partials/_csrf.twig' %}
+                            <input type="hidden" name="return_to" value="/recipes/{{ recipe.slug }}">
+                            <button type="submit" class="link-button">&#9733; In your Grimoire &mdash; remove</button>
+                        </form>
+                    {% else %}
+                        <form method="post" action="/grimoire/{{ recipe.id }}" class="inline-form">
+                            {% include 'partials/_csrf.twig' %}
+                            <input type="hidden" name="return_to" value="/recipes/{{ recipe.slug }}">
+                            <button type="submit" class="link-button">&#9734; Add to Grimoire</button>
+                        </form>
+                    {% endif %}
+                </p>
+            {% else %}
+                <p class="grimoire-toggle">
+                    <small><a href="/login?next={{ ('/recipes/' ~ recipe.slug)|url_encode }}">Log in</a> to add this
+                        to your Grimoire.</small>
+                </p>
+            {% endif %}
+
             {% if story %}
                 <section class="panel narrator-story">
                     {% if recipe.narrator %}<p class="story-narrator"><em>Told by {{ recipe.narrator }}</em></p>{% endif %}

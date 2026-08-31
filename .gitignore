@@ -15,6 +15,11 @@
 /storage/testing.sqlite
 
 .phpunit.result.cache
+.phpunit.cache/
+.phpunit.coverage.cache
+/coverage/
 .phpstan/
 
 /.idea/
+
+.DS_Store

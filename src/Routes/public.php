@@ -2,7 +2,10 @@
 
 declare(strict_types=1);
 
+use App\Auth\SessionAuth;
+use App\Http\CrawlerAudience;
 use App\Http\RecipeJsonLd;
+use App\Repository\GrimoireRepository;
 use App\Repository\RecipeRepository;
 use App\Repository\StoryRepository;
 use App\Repository\TagRepository;
@@ -91,6 +94,16 @@ return function (App $app): void {
         $story = $recipe['story_id'] !== null ? $stories->findById((int) $recipe['story_id']) : null;
         $recipeTags = $tags->tagsForRecipe($recipe['id']);
 
+        // Only meaningful for a logged-in user (Grimoire is a User-tier
+        // privilege, spec.md -- Roles & Permissions) -- left false for a
+        // guest rather than querying grimoire_entries for no one.
+        $inGrimoire = false;
+        if (SessionAuth::isLoggedIn()) {
+            /** @var GrimoireRepository $grimoire */
+            $grimoire = $container->get(GrimoireRepository::class);
+            $inGrimoire = $grimoire->isInGrimoire((int) SessionAuth::id(), (int) $recipe['id']);
+        }
+
         /** @var array{app_url: string} $settings */
         $settings = $container->get('settings');
         $canonicalUrl = rtrim($settings['app_url'], '/') . '/recipes/' . $recipe['slug'];
@@ -99,6 +112,7 @@ return function (App $app): void {
             'recipe' => $recipe,
             'story' => $story,
             'tags' => $recipeTags,
+            'inGrimoire' => $inGrimoire,
             'recipeJsonLd' => RecipeJsonLd::build($recipe, $story, $recipeTags, $canonicalUrl),
         ]);
     });
@@ -142,6 +156,28 @@ return function (App $app): void {
     $app->get('/writers', function (Request $request, Response $response): Response {
         return Twig::fromRequest($request)->render($response, 'writers/index.twig', [
             'writers' => writerRoster(),
+        ]);
+    });
+
+    // Terms & conditions. One URL, two renderings of the same agreement:
+    // a short plain-language page for people, and a much longer fully
+    // defined-term version for AI-training / answer-engine crawlers, since
+    // that audience has the document parsed rather than read (see
+    // App\Http\CrawlerAudience for which User-Agents get which, and why
+    // ordinary search crawlers still get the human page). Both say the
+    // same thing: don't ingest the content -- pay GBP 5 and it's yours,
+    // licensed and in bulk. `Vary: User-Agent` so a shared cache in front
+    // of the app can't hand one audience's copy to the other.
+    $app->get('/terms', function (Request $request, Response $response): Response {
+        $template = CrawlerAudience::isMachine($request->getHeaderLine('User-Agent'))
+            ? 'terms/machine.twig'
+            : 'terms/index.twig';
+
+        $response = $response->withHeader('Vary', 'User-Agent');
+
+        return Twig::fromRequest($request)->render($response, $template, [
+            'contact_email' => 'licensing@fantasyrecipes.co.uk',
+            'fee_gbp' => 5,
         ]);
     });
 };

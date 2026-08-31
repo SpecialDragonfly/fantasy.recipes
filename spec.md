@@ -81,8 +81,14 @@ recipe. **Merge** (combining duplicate/synonymous tags and reassigning
 affected recipes) is explicitly deferred, not v1.
 
 **Wishlist ("Grimoire")**
-A single per-user bookmark list — "recipes I want to try." No separate
-"already made this" tracking.
+Two features under one name: a per-user bookmark list — "recipes I want to
+try," no separate "already made this" tracking — plus a user's own private
+recipes (`PersonalRecipe`: title, ingredients, instructions), typed in by
+that user and visible to nobody else, ever — not other users, not admins,
+not public browse/search. Deliberately a separate, minimal data shape from
+`Recipe`: no `Narrator`/`Story`/tags/ritual styling, no `Status`
+draft/published, no slug/public URL — a personal recipe has none of the
+curated-fantasy-pipeline machinery, and never enters it.
 
 **Published**
 The `published` state of a Recipe's `Status`, gating public visibility.
@@ -97,7 +103,8 @@ Three flat tiers, no moderator tier:
 - **Guest** — full read access to everything published (OriginalIngredients,
   OriginalInstructions, NarratorRecipe, Story — no content gating at all).
   Cannot submit anything. No Grimoire/wishlist.
-- **Logged-in User** — guest rights, plus: use the Grimoire wishlist.
+- **Logged-in User** — guest rights, plus: use the Grimoire (bookmark
+  published recipes, and add/edit/delete their own private recipes).
   Registration is **open self-serve** — anyone who finds the URL can sign up
   with no invite code or approval step. There is currently no public
   submission path for Stories — Story is admin-authored only (see Domain

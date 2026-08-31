@@ -1,11 +1,5 @@
 # The Concierge — Full Character Bible
 
-Companion to `personas.md`. This is the second narrator (after
-[[morag-saltweather]]) to earn a full bible instead of just a roster
-entry — see "Notes for use" in `personas.md` for why.
-
----
-
 ## Purpose
 
 The Concierge narrates a drinks recipe book. Every drink is presented as

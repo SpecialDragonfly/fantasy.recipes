@@ -1,0 +1,45 @@
+{% extends 'layout.twig' %}
+
+{% block title %}{{ personalRecipe ? 'Edit ' ~ personalRecipe.title : 'Add a recipe' }} &mdash; fantasy.recipes{% endblock %}
+
+{% block content %}
+    {% if personalRecipe %}
+        <p><a href="/grimoire/recipes/{{ personalRecipe.id }}">&larr; Back to {{ personalRecipe.title }}</a></p>
+    {% else %}
+        <p><a href="/grimoire">&larr; Back to your Grimoire</a></p>
+    {% endif %}
+
+    <section class="auth-form">
+        <h1>{{ personalRecipe ? 'Edit recipe' : 'Add a recipe' }}</h1>
+        <p><small>Private to you &mdash; nobody else can see this, and it never appears anywhere on the public
+            site.</small></p>
+
+        <form method="post" action="{{ personalRecipe ? '/grimoire/recipes/' ~ personalRecipe.id ~ '/edit' : '/grimoire/recipes/new' }}">
+            {% include 'partials/_csrf.twig' %}
+
+            <label for="title">Title</label>
+            <input type="text" id="title" name="title" value="{{ old.title|default(personalRecipe.title)|default('') }}"
+                   required maxlength="255">
+
+            <label for="ingredients">Ingredients</label>
+            <textarea id="ingredients" name="ingredients" rows="8">{{ old.ingredients|default(personalRecipe.ingredients)|default('') }}</textarea>
+
+            <label for="instructions">Instructions</label>
+            <textarea id="instructions" name="instructions" rows="8">{{ old.instructions|default(personalRecipe.instructions)|default('') }}</textarea>
+
+            <button type="submit">{{ personalRecipe ? 'Save' : 'Add to Grimoire' }}</button>
+        </form>
+    </section>
+
+    {% if personalRecipe %}
+        <section class="auth-form">
+            <h2>Danger zone</h2>
+            <p>Permanently deletes this recipe. This cannot be undone.</p>
+            <form method="post" action="/grimoire/recipes/{{ personalRecipe.id }}/delete"
+                  onsubmit="return confirm('Delete &quot;{{ personalRecipe.title|e('js') }}&quot;? This cannot be undone.');">
+                {% include 'partials/_csrf.twig' %}
+                <button type="submit" class="button button-danger">Delete recipe</button>
+            </form>
+        </section>
+    {% endif %}
+{% endblock %}

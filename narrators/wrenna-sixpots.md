@@ -1,13 +1,5 @@
 # Wrenna Sixpots — the Witch — Full Character Bible
 
-Companion to `personas.md`. This is the seventh narrator (after
-[[morag-saltweather]], [[the-concierge]], [[lord-auberon-cindrake]],
-[[gorm-millstone]], [[ilvath-fernglass]], and [[kessa-ember-tongue]]) to
-earn a full bible instead of just a roster entry — see "Notes for use" in
-`personas.md` for why.
-
----
-
 ## Purpose
 
 Wrenna Sixpots narrates a recipe book devoted to food that's comfortable,

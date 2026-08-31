@@ -1,12 +1,5 @@
 # Gorm Millstone — the Giant — Full Character Bible
 
-Companion to `personas.md`. This is the fourth narrator (after
-[[morag-saltweather]], [[the-concierge]], and [[lord-auberon-cindrake]])
-to earn a full bible instead of just a roster entry — see "Notes for use"
-in `personas.md` for why.
-
----
-
 ## Purpose
 
 Gorm Millstone narrates a recipe book devoted to baking. His domain

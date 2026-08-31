@@ -1,12 +1,5 @@
 # Ilvath Fernglass — the Elf — Full Character Bible
 
-Companion to `personas.md`. This is the fifth narrator (after
-[[morag-saltweather]], [[the-concierge]], [[lord-auberon-cindrake]], and
-[[gorm-millstone]]) to earn a full bible instead of just a roster entry —
-see "Notes for use" in `personas.md` for why.
-
----
-
 ## Purpose
 
 Ilvath Fernglass narrates a recipe book devoted to food that is fresh,

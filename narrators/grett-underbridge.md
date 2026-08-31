@@ -1,13 +1,5 @@
 # Grett Underbridge — the Troll — Full Character Bible
 
-Companion to `personas.md`. This is the eighth narrator (after
-[[morag-saltweather]], [[the-concierge]], [[lord-auberon-cindrake]],
-[[gorm-millstone]], [[ilvath-fernglass]], [[kessa-ember-tongue]], and
-[[wrenna-sixpots]]) to earn a full bible instead of just a roster entry —
-see "Notes for use" in `personas.md` for why.
-
----
-
 ## Purpose
 
 Grett Underbridge narrates a recipe book devoted to food that's hearty,

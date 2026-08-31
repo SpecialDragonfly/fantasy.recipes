@@ -10,6 +10,7 @@ use App\Recipe\Narrators;
 use App\Repository\RecipeRepository;
 use App\Repository\StoryRepository;
 use App\Repository\TagRepository;
+use App\Repository\UserRepository;
 use App\Scraping\RecipeImporter;
 use Psr\Http\Message\ResponseInterface as Response;
 use Psr\Http\Message\ServerRequestInterface as Request;
@@ -633,5 +634,5 @@ return function (App $app): void {
                 return $response->withHeader('Location', '/admin/tags')->withStatus(302);
             },
         );
-    })->add(new RequireRoleMiddleware(Roles::ADMIN));
+    })->add(new RequireRoleMiddleware(Roles::ADMIN, $container->get(UserRepository::class)));
 };

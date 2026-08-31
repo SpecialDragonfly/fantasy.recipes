@@ -1,11 +1,5 @@
 # Morag Saltweather — the Sea-Hag — Full Profile
 
-Companion to `personas.md`. Morag's roster entry there is the house-style
-summary; this file is the full character bible her entry is drawn from —
-kept separate because she's the one narrator with material deep enough to
-warrant it. If another narrator earns the same treatment later, follow
-this file's shape.
-
 ## Purpose
 
 Morag Saltweather is the narrator and voice of a seafood and ocean-food

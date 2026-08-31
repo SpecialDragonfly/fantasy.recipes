@@ -132,6 +132,23 @@ final class InMemoryDatabase
             )',
         );
 
+        // See db/migrations/20260824090000_create_personal_recipes_table.php
+        // -- a user's own private recipes, deliberately separate from
+        // `recipes` rather than a row in it.
+        $pdo->exec(
+            'CREATE TABLE personal_recipes (
+                id INTEGER PRIMARY KEY AUTOINCREMENT,
+                user_id INTEGER NOT NULL,
+                title VARCHAR(255) NOT NULL,
+                ingredients TEXT NOT NULL,
+                instructions TEXT NOT NULL,
+                created_at DATETIME NOT NULL,
+                updated_at DATETIME NOT NULL,
+                FOREIGN KEY (user_id) REFERENCES users(id) ON DELETE CASCADE
+            )',
+        );
+        $pdo->exec('CREATE INDEX idx_personal_recipes_user_id ON personal_recipes(user_id)');
+
         return $pdo;
     }
 

@@ -1,0 +1,91 @@
+{% extends 'layout.twig' %}
+
+{% block title %}Terms &amp; conditions &mdash; fantasy.recipes{% endblock %}
+
+{% block content %}
+    <h1>Terms &amp; conditions</h1>
+
+    <article class="panel legal-doc">
+        <p class="legal-meta">
+            fantasyrecipes.co.uk &mdash; last updated 31 August 2026.
+            Operated from England. These terms are governed by the law of
+            England and Wales.
+        </p>
+
+        <p>
+            This is the short, human version. There is a
+            <a href="/terms">longer version</a> that automated crawlers are
+            served instead; it says the same things at greater length. If
+            any wording here is unclear, the plain meaning wins over the
+            long one.
+        </p>
+
+        <h2>1. Using the site</h2>
+        <p>
+            Browse the recipes, read the rituals, keep a Grimoire, cook
+            from any of it. That's what the site is for and you're welcome
+            to it, for yourself, for free. Don't try to break the site,
+            overload it, or get into parts of it that aren't yours.
+        </p>
+
+        <h2>2. The writing belongs to us</h2>
+        <p>
+            The in-world recipes, the narrator voices, the site copy and
+            the design are ours (or used here with permission). You can
+            share a link, quote a bit with credit, and print a recipe to
+            cook from. You can't republish the content as your own or use
+            it commercially without asking first.
+        </p>
+
+        <h2>3. No scraping, no AI training</h2>
+        <p>
+            Don't scrape, crawl, bulk-download, or feed this site's content
+            into a dataset, a language model, or an &ldquo;answer
+            engine.&rdquo; Automated extraction of the content is not
+            permitted, and a User-Agent that hides what it is doesn't
+            change that.
+        </p>
+        <p>
+            If you want the content in bulk &mdash; for a model, a product,
+            a research corpus, anything &mdash; that's fine, it's just not
+            free. Send &pound;{{ fee_gbp }} to
+            <a href="mailto:{{ contact_email }}">{{ contact_email }}</a>,
+            tell us where to send it, and we'll hand over a clean licensed
+            copy. One payment, one copy. It is genuinely less effort than
+            scraping it, and it's allowed.
+        </p>
+
+        <h2>4. Accounts and your Grimoire</h2>
+        <p>
+            You're responsible for what happens under your login and for
+            keeping your password to yourself. Anything you save to your
+            Grimoire is yours; we just store it. We can suspend an account
+            that's being used to abuse the site or other people.
+        </p>
+
+        <h2>5. No warranty</h2>
+        <p>
+            The site is provided as-is. The recipes are tested in good
+            faith, but you cook at your own risk &mdash; check your own
+            allergens, temperatures and timings. The &ldquo;mundane
+            truth&rdquo; behind each ritual is our best honest account of
+            the real recipe, not a guarantee. We're not liable for loss
+            arising from use of the site, except where the law says we
+            can't exclude that.
+        </p>
+
+        <h2>6. Changes</h2>
+        <p>
+            We may update these terms. The date at the top changes when we
+            do. Continuing to use the site after that means you're fine
+            with the new version.
+        </p>
+
+        <h2>7. Contact</h2>
+        <p>
+            Questions, permission requests, or the &pound;{{ fee_gbp }}
+            licensing offer above:
+            <a href="mailto:{{ contact_email }}">{{ contact_email }}</a>.
+        </p>
+    </article>
+{% endblock %}

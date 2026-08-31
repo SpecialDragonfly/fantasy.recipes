@@ -1,15 +1,5 @@
 # Fennick Merrymead — the Satyr — Full Character Bible
 
-Companion to `personas.md`. This is the tenth and final narrator (after
-[[morag-saltweather]], [[the-concierge]], [[lord-auberon-cindrake]],
-[[gorm-millstone]], [[ilvath-fernglass]], [[kessa-ember-tongue]],
-[[wrenna-sixpots]], [[grett-underbridge]], and [[bryony-thistledown]]) to
-earn a full bible instead of just a roster entry — see "Notes for use" in
-`personas.md` for why. With this one, every narrator on the house roster
-has a full character bible.
-
----
-
 ## Purpose
 
 Fennick Merrymead narrates recipes intended for celebration. His domain

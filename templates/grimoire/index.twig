@@ -5,6 +5,10 @@
 {% block content %}
     <section class="panel">
         <h1>Your Grimoire</h1>
+    </section>
+
+    <section class="panel">
+        <h2>Bookmarked recipes</h2>
         {% if entries|length %}
             <ul class="grimoire-list">
                 {% for entry in entries %}
@@ -19,9 +23,26 @@
             </ul>
         {% else %}
             <p>
-                Your Grimoire is empty. Wander the <a href="/recipes">recipes</a> and bookmark the ones
-                that call to you -- recipes I want to try, nothing more.
+                Nothing bookmarked yet. Wander the <a href="/recipes">recipes</a> and bookmark the ones
+                that call to you &mdash; recipes I want to try, nothing more.
             </p>
         {% endif %}
+    </section>
+
+    <section class="panel">
+        <h2>Your own recipes <small>(private &mdash; only you can see these)</small></h2>
+        {% if personalRecipes|length %}
+            <ul class="grimoire-list">
+                {% for recipe in personalRecipes %}
+                    <li class="grimoire-entry">
+                        <a href="/grimoire/recipes/{{ recipe.id }}">{{ recipe.title }}</a>
+                    </li>
+                {% endfor %}
+            </ul>
+        {% else %}
+            <p>You haven't added any recipes of your own yet &mdash; your own notes, family recipes, whatever
+                you like. Nobody but you will ever see them.</p>
+        {% endif %}
+        <p><a href="/grimoire/recipes/new" class="button">Add a recipe</a></p>
     </section>
 {% endblock %}

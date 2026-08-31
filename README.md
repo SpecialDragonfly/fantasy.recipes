@@ -2,6 +2,8 @@
 
 A recipe site where every recipe is framed as an in-world fantasy ritual.
 
+The production domain is **fantasyrecipes.co.uk** (registered 2026-08-31).
+
 ## Local development (SQLite, no Docker)
 
 ```

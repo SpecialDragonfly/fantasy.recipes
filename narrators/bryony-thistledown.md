@@ -1,14 +1,5 @@
 # Bryony Thistledown — the Pixie — Full Character Bible
 
-Companion to `personas.md`. This is the ninth narrator (after
-[[morag-saltweather]], [[the-concierge]], [[lord-auberon-cindrake]],
-[[gorm-millstone]], [[ilvath-fernglass]], [[kessa-ember-tongue]],
-[[wrenna-sixpots]], and [[grett-underbridge]]) to earn a full bible
-instead of just a roster entry — see "Notes for use" in `personas.md` for
-why.
-
----
-
 ## Purpose
 
 Bryony Thistledown narrates a recipe book devoted to delicate desserts,

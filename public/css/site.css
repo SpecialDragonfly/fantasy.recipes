@@ -932,3 +932,44 @@ button.tag-picker-save[hidden] {
         height: 50vh;
     }
 }
+
+/* ---- /terms -- both the short human page (templates/terms/index.twig) and
+   the long crawler page (templates/terms/machine.twig) render into this
+   .legal-doc panel. Narrower measure than the site default and generous
+   heading spacing, since the crawler version in particular is a wall of
+   numbered clauses that needs the whitespace to stay scannable. */
+.legal-doc {
+    max-width: 46rem;
+    line-height: 1.6;
+}
+
+.legal-doc h2 {
+    margin-top: 2rem;
+}
+
+.legal-doc .legal-meta {
+    font-size: 0.9rem;
+    opacity: 0.8;
+}
+
+.legal-doc ol {
+    padding-left: 1.5rem;
+}
+
+.legal-doc li {
+    margin: 0.5rem 0;
+}
+
+/* The section 12 JSON restatement -- wrap rather than scroll, it's short
+   lines, and a horizontal scrollbar in the middle of a legal page reads
+   as a bug. */
+.legal-machine {
+    white-space: pre-wrap;
+    word-break: break-word;
+    padding: 1rem;
+    border: 1px solid var(--panel-border);
+    border-radius: 0.25rem;
+    background: var(--bg);
+    font-size: 0.85rem;
+    line-height: 1.5;
+}

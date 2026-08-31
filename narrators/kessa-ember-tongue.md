@@ -1,12 +1,5 @@
 # Kessa Ember-Tongue — the Efreet — Full Character Bible
 
-Companion to `personas.md`. This is the sixth narrator (after
-[[morag-saltweather]], [[the-concierge]], [[lord-auberon-cindrake]],
-[[gorm-millstone]], and [[ilvath-fernglass]]) to earn a full bible instead
-of just a roster entry — see "Notes for use" in `personas.md` for why.
-
----
-
 ## Purpose
 
 Kessa Ember-Tongue narrates a recipe book devoted to food that's hot,
