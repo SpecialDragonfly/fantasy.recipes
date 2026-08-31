@@ -899,11 +899,11 @@ button.tag-picker-save[hidden] {
 }
 
 /* ---- Ad placements (templates/recipes/detail.twig) --------------------
-   Placeholder boxes only for now -- solid light grey, standard IAB sizes
-   (728x90 leaderboard, 160x600 skyscraper). Deliberately NOT themed off
-   --panel/--frame tokens: these are third-party ad slots, not site chrome,
-   so they should look like a flat placeholder in both light and dark mode
-   rather than shifting with the parchment/slate theme. */
+   Placeholder boxes only for now -- solid light grey, standard IAB sizes.
+   Deliberately NOT themed off --panel/--frame tokens: these are
+   third-party ad slots, not site chrome, so they should look like a flat
+   placeholder in both light and dark mode rather than shifting with the
+   parchment/slate theme. */
 .ad-slot {
     display: flex;
     align-items: center;
@@ -917,22 +917,71 @@ button.tag-picker-save[hidden] {
     letter-spacing: 0.04em;
 }
 
-.ad-leaderboard {
-    width: 728px;
-    max-width: 100%;
-    height: 90px;
-    margin: 0 auto 1.5rem;
-}
-
 .ad-skyscraper {
     flex: 0 0 160px;
     width: 160px;
     height: 600px;
+    /* Hidden for now -- not enough traffic to sell the side rails. The
+       markup is kept in templates/recipes/detail.twig; remove this line
+       to bring them back. */
+    display: none;
 }
 
-/* Skyscraper + main content side by side; the right-hand slot is the
-   editable placeholder called out in the brief, same dimensions as the
-   left ad so the page stays visually balanced. */
+/* Top strip: a "Buy me a coffee" link (left) beside a placeholder ad
+   slot (right), sharing the 728x90 footprint the leaderboard had. */
+.promo-strip {
+    display: flex;
+    gap: 1.5rem;
+    width: 728px;
+    max-width: 100%;
+    margin: 0 auto 1.5rem;
+}
+
+.promo-strip > * {
+    flex: 1 1 0;
+    min-width: 0;
+    height: 90px;
+}
+
+.promo-coffee {
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    gap: 0.8rem;
+    text-decoration: none;
+    color: var(--panel-text);
+    background: var(--panel-texture);
+    border: 1px solid var(--panel-border);
+    border-radius: 0.25rem;
+    box-shadow: var(--panel-shadow);
+    font-family: var(--font-heading);
+}
+
+.promo-coffee img {
+    box-sizing: border-box;
+    width: 72px;
+    height: 72px;
+    padding: 3px;
+    /* The QR is black-on-transparent -- it needs a light ground and a
+       quiet-zone margin to stay scannable, dark mode included. */
+    background: #fff;
+    border-radius: 4px;
+}
+
+.promo-coffee:hover,
+.promo-coffee:focus-visible {
+    border-color: var(--accent);
+    color: var(--link);
+}
+
+/* Right-hand ad slot hidden for now -- no ad demand yet. visibility
+   rather than display keeps its half of the strip reserved, so the
+   coffee link stays at half width on the left (deliberately lop-sided);
+   dropped entirely once the strip stacks on mobile. */
+.promo-ad {
+    visibility: hidden;
+}
+
 .recipe-with-ads {
     display: flex;
     align-items: flex-start;
@@ -944,12 +993,22 @@ button.tag-picker-save[hidden] {
     min-width: 0;
 }
 
-/* Below ~1000px there's no room for two 160px rails either side of the
-   recipe text without squeezing it unreadably narrow -- drop both side
-   slots and keep just the leaderboard, same breakpoint logic as the
-   site-nav wrap above. */
-@media (max-width: 1000px) {
-    .ad-skyscraper {
+/* Stack the top strip on narrow viewports -- no room for the QR, its
+   label and an ad slot on one row. */
+@media (max-width: 560px) {
+    .promo-strip {
+        flex-direction: column;
+    }
+
+    .promo-strip > * {
+        height: auto;
+    }
+
+    .promo-coffee {
+        padding: 0.75rem;
+    }
+
+    .promo-ad {
         display: none;
     }
 }
