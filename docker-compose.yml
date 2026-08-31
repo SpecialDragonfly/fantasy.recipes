@@ -24,7 +24,12 @@ services:
     volumes:
       - ./public:/app/public:ro
       - uploads:/app/storage/uploads:ro
-      - ./docker/nginx/default.conf:/etc/nginx/conf.d/default.conf:ro
+      # Mount the whole dir, not default.conf on its own: a single-file bind
+      # mount pins to the file's inode, and `git pull` replaces the inode
+      # rather than editing in place, so the container keeps serving the old
+      # config until it's recreated. A directory mount is resolved by name
+      # on each access, so `git pull` + `nginx -s reload` just works.
+      - ./docker/nginx:/etc/nginx/conf.d:ro
     ports:
       # Bound to localhost only -- the host's existing nginx reverse proxy
       # forwards recipes.notquitehuman.co.uk here; this container never
