@@ -1,6 +1,6 @@
 {% extends 'layout.twig' %}
 
-{% block title %}{{ personalRecipe ? 'Edit ' ~ personalRecipe.title : 'Add a recipe' }} &mdash; fantasy.recipes{% endblock %}
+{% block title %}{{ personalRecipe ? 'Edit ' ~ personalRecipe.title : 'Add a recipe' }} - fantasy.recipes{% endblock %}
 
 {% block content %}
     {% if personalRecipe %}
@@ -11,7 +11,7 @@
 
     <section class="auth-form">
         <h1>{{ personalRecipe ? 'Edit recipe' : 'Add a recipe' }}</h1>
-        <p><small>Private to you &mdash; nobody else can see this, and it never appears anywhere on the public
+        <p><small>Private to you - nobody else can see this, and it never appears anywhere on the public
             site.</small></p>
 
         <form method="post" action="{{ personalRecipe ? '/grimoire/recipes/' ~ personalRecipe.id ~ '/edit' : '/grimoire/recipes/new' }}">

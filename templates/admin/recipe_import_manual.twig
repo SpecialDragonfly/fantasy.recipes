@@ -1,12 +1,12 @@
 {% extends 'layout.twig' %}
 
-{% block title %}Manual import &mdash; fantasy.recipes{% endblock %}
+{% block title %}Manual import - fantasy.recipes{% endblock %}
 
 {% block content %}
     <section class="auth-form">
         <h1>Manual import</h1>
         <p><small>Automated import couldn't pull this recipe in on its own{% if sourceUrl %} (see the error
-            above){% endif %} &mdash; copy the ingredients and instructions across by hand from the source page on
+            above){% endif %} - copy the ingredients and instructions across by hand from the source page on
             the right.</small></p>
 
         {% if errors is defined and errors|length %}
@@ -59,10 +59,10 @@
                     <iframe src="{{ sourceUrl }}" title="Source recipe page" loading="lazy"
                             referrerpolicy="no-referrer"></iframe>
                     <p><small>Some sites (BBC Good Food and Riverford among them) refuse to display inside another
-                        page and this panel will stay blank &mdash; use the "open in a new tab" link above
+                        page and this panel will stay blank - use the "open in a new tab" link above
                         instead.</small></p>
                 {% else %}
-                    <p><small>No source URL given, so there's nothing to preview here &mdash; paste the recipe in
+                    <p><small>No source URL given, so there's nothing to preview here - paste the recipe in
                         from wherever it came from.</small></p>
                 {% endif %}
             </div>

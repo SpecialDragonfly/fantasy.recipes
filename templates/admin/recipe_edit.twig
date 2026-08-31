@@ -1,6 +1,6 @@
 {% extends 'layout.twig' %}
 
-{% block title %}Edit {{ recipe.title }} &mdash; fantasy.recipes{% endblock %}
+{% block title %}Edit {{ recipe.title }} - fantasy.recipes{% endblock %}
 
 {% block content %}
     <p><a href="{{ backUrl }}">&larr; Back to recipes</a></p>
@@ -9,19 +9,19 @@
         <h1>{{ recipe.title }}</h1>
         <p>
             {% if recipe.status == 'published' %}
-                <strong>Published</strong> &mdash;
+                <strong>Published</strong> -
                 <form method="post" action="/admin/recipes/{{ recipe.id }}/unpublish" class="inline-form">
                     {% include 'partials/_csrf.twig' %}
                     <button type="submit" class="link-button">Unpublish</button>
                 </form>
             {% else %}
-                Draft &mdash;
+                Draft -
                 <form method="post" action="/admin/recipes/{{ recipe.id }}/publish" class="inline-form">
                     {% include 'partials/_csrf.twig' %}
                     <button type="submit" class="link-button">Publish</button>
                 </form>
             {% endif %}
-            {% if recipe.status == 'published' %}&mdash; <a href="/recipes/{{ recipe.slug }}">View live page</a>{% endif %}
+            {% if recipe.status == 'published' %}- <a href="/recipes/{{ recipe.slug }}">View live page</a>{% endif %}
         </p>
         {% if recipe.origin %}<p><small>Origin: {{ recipe.origin }}</small></p>{% endif %}
     </section>

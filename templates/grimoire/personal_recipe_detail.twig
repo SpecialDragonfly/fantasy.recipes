@@ -1,14 +1,14 @@
 {% extends 'layout.twig' %}
 
-{% block title %}{{ personalRecipe.title }} &mdash; fantasy.recipes{% endblock %}
+{% block title %}{{ personalRecipe.title }} - fantasy.recipes{% endblock %}
 
 {% block content %}
     <p><a href="/grimoire">&larr; Back to your Grimoire</a></p>
 
     <section class="panel">
         <h1>{{ personalRecipe.title }}</h1>
-        <p><small>Private to you &mdash; nobody else can see this, and it never appears anywhere on the public
-            site.</small> &mdash; <a href="/grimoire/recipes/{{ personalRecipe.id }}/edit">Edit</a></p>
+        <p><small>Private to you - nobody else can see this, and it never appears anywhere on the public
+            site.</small> - <a href="/grimoire/recipes/{{ personalRecipe.id }}/edit">Edit</a></p>
 
         <div class="instruction-text">{{ personalRecipe.ingredients|nl2br }}</div>
         <div class="instruction-text">{{ personalRecipe.instructions|nl2br }}</div>

@@ -1,6 +1,6 @@
 {% extends 'layout.twig' %}
 
-{% block title %}Admin: Recipes &mdash; fantasy.recipes{% endblock %}
+{% block title %}Admin: Recipes - fantasy.recipes{% endblock %}
 
 {% block content %}
     {% set baseParams = {} %}
@@ -59,7 +59,7 @@
                             <input type="hidden" name="status" value="{{ status|default('') }}">
                             <button type="submit"
                                     class="link-button status-light {{ recipe.status == 'published' ? 'status-light-published' : 'status-light-unpublished' }}"
-                                    title="{{ recipe.status == 'published' ? 'Published — click to unpublish' : 'Draft — click to publish' }}"
+                                    title="{{ recipe.status == 'published' ? 'Published - click to unpublish' : 'Draft - click to publish' }}"
                                     aria-label="{{ recipe.status == 'published' ? 'Published, click to unpublish' : 'Draft, click to publish' }}"></button>
                         </form>
                         <div class="recipe-row-name">
@@ -105,7 +105,7 @@
                 {% if page > 1 %}
                     <a href="/admin/recipes?{{ baseParams|merge({'page': page - 1})|url_encode }}">&laquo; Previous</a>
                 {% endif %}
-                {% if page > 1 and hasNextPage %} &mdash; {% endif %}
+                {% if page > 1 and hasNextPage %} - {% endif %}
                 {% if hasNextPage %}
                     <a href="/admin/recipes?{{ baseParams|merge({'page': page + 1})|url_encode }}">Next &raquo;</a>
                 {% endif %}

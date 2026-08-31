@@ -1,6 +1,6 @@
 {% extends 'layout.twig' %}
 
-{% block title %}{{ recipe.title }} &mdash; fantasy.recipes{% endblock %}
+{% block title %}{{ recipe.title }} - fantasy.recipes{% endblock %}
 
 {% block head_extra %}
     {% if recipeJsonLd %}
@@ -41,7 +41,7 @@
                         <form method="post" action="/grimoire/{{ recipe.id }}/remove" class="inline-form">
                             {% include 'partials/_csrf.twig' %}
                             <input type="hidden" name="return_to" value="/recipes/{{ recipe.slug }}">
-                            <button type="submit" class="link-button">&#9733; In your Grimoire &mdash; remove</button>
+                            <button type="submit" class="link-button">&#9733; In your Grimoire - remove</button>
                         </form>
                     {% else %}
                         <form method="post" action="/grimoire/{{ recipe.id }}" class="inline-form">

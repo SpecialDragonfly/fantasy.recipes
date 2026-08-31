@@ -1,6 +1,6 @@
 {% extends 'layout.twig' %}
 
-{% block title %}Your Grimoire &mdash; fantasy.recipes{% endblock %}
+{% block title %}Your Grimoire - fantasy.recipes{% endblock %}
 
 {% block content %}
     <section class="panel">
@@ -24,13 +24,13 @@
         {% else %}
             <p>
                 Nothing bookmarked yet. Wander the <a href="/recipes">recipes</a> and bookmark the ones
-                that call to you &mdash; recipes I want to try, nothing more.
+                that call to you - recipes I want to try, nothing more.
             </p>
         {% endif %}
     </section>
 
     <section class="panel">
-        <h2>Your own recipes <small>(private &mdash; only you can see these)</small></h2>
+        <h2>Your own recipes <small>(private - only you can see these)</small></h2>
         {% if personalRecipes|length %}
             <ul class="grimoire-list">
                 {% for recipe in personalRecipes %}
@@ -40,7 +40,7 @@
                 {% endfor %}
             </ul>
         {% else %}
-            <p>You haven't added any recipes of your own yet &mdash; your own notes, family recipes, whatever
+            <p>You haven't added any recipes of your own yet - your own notes, family recipes, whatever
                 you like. Nobody but you will ever see them.</p>
         {% endif %}
         <p><a href="/grimoire/recipes/new" class="button">Add a recipe</a></p>
