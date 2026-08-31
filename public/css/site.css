@@ -865,14 +865,33 @@ button.tag-picker-save[hidden] {
     color: var(--text);
 }
 
+/* Both panels sit on a light parchment image in every theme, so their
+   text is always ink-black -- not the theme's --panel-text, which goes
+   pale in dark mode and would vanish against the parchment. The sheet
+   is warm parch.png in light mode, cooler parch-grey.png in dark
+   (two-selector dark handling, same as the palette blocks up top). */
 .narrator-story {
     background-image: url("../images/parch.png");
+    color: #000;
     margin-bottom:20px;
 }
 
 .narrator-recipe {
     background-image: url("../images/parch.png");
+    color: #000;
     margin-bottom:20px;
+}
+
+@media (prefers-color-scheme: dark) {
+    :root:not([data-theme="light"]) .narrator-story,
+    :root:not([data-theme="light"]) .narrator-recipe {
+        background-image: url("../images/parch-grey.png");
+    }
+}
+
+:root[data-theme="dark"] .narrator-story,
+:root[data-theme="dark"] .narrator-recipe {
+    background-image: url("../images/parch-grey.png");
 }
 
 .mundane-truth summary {
