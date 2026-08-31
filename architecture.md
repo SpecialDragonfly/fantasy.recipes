@@ -70,12 +70,19 @@ product decisions.
 - **Config:** `vlucas/phpdotenv`. Separate `.env` profiles for
   Docker/MySQL vs. local/SQLite. Canonical app domain is an env var (see
   Deployment & Networking) — never hardcoded.
-- **Mail:** `symfony/mailer`, configured against a transactional email API
-  (Mailgun/Postmark/Brevo-class service — exact provider still open, but the
-  integration point is the same regardless: an API key in `.env`, sent
-  through Mailer's HTTP transport rather than SMTP). Used for **password
-  reset only** — this is deliberately the one place the app sends email;
-  the spec explicitly rules out submission-status notifications elsewhere.
+- **Mail:** `symfony/mailer` over **Resend** (`resend+api://` DSN,
+  `symfony/resend-mailer` + `symfony/http-client`), behind the app's own
+  `App\Mail\Mailer` interface. `App\Mail\SymfonyMailer` is the real
+  implementation; `App\Mail\LogMailer` (writes to `storage/mail/`) is the
+  fallback whenever `MAIL_API_KEY` is unset -- i.e. local dev and the whole
+  test suite, so neither needs a provider or network. The DSN is built in
+  `src/bootstrap.php` from `MAIL_API_KEY` (a Resend "Sending access" key);
+  swapping providers is a one-line DSN change plus the matching
+  `symfony/*-mailer` bridge. `MAIL_FROM_ADDRESS` must be on a domain
+  verified in Resend (`fantasyrecipes.co.uk`, via its DKIM/SPF DNS
+  records). Used for **password reset only** -- this is deliberately the
+  one place the app sends email; the spec explicitly rules out
+  submission-status notifications elsewhere.
   A `password_reset_tokens` table (`user_id`, `token_hash`, `expires_at`)
   backs the flow: generate a single-use, expiring token, email a link
   containing it, verify + consume it, expire any unused prior tokens for
@@ -284,8 +291,5 @@ Implementation-level additions:
 
 ## Open Questions
 
-- **Transactional email provider** — decided to use a transactional email
-  API for password reset, but the specific provider (Mailgun/Postmark/
-  Brevo/etc.) isn't chosen yet. Doesn't block building the reset flow
-  itself, since `symfony/mailer`'s transport is swappable.
+_(none outstanding)_
 

@@ -4,6 +4,7 @@ declare(strict_types=1);
 
 use App\Mail\LogMailer;
 use App\Mail\Mailer;
+use App\Mail\SymfonyMailer;
 use App\Search\LikeSearch;
 use App\Search\MysqlFulltextSearch;
 use App\Search\RecipeSearch;
@@ -109,12 +110,23 @@ $builder->addDefinitions([
         return $db['driver'] === 'mysql' ? new MysqlFulltextSearch($pdo) : new LikeSearch($pdo);
     },
 
-    // No transactional email provider is chosen yet (see architecture.md --
-    // Open Questions) -- LogMailer is a working stand-in behind the Mailer
-    // interface so the password-reset flow doesn't have to wait on that
-    // decision. Swap this binding for a real implementation later.
+    // Transactional email (password reset only). With MAIL_API_KEY set,
+    // send for real via Resend (resend+api:// DSN, symfony/resend-mailer);
+    // otherwise fall back to LogMailer, which writes to storage/mail/ --
+    // that's what local dev and the test suite use, so neither needs a
+    // provider or network.
     Mailer::class => function () use ($root): Mailer {
-        return new LogMailer($root . '/storage/mail');
+        $apiKey = $_ENV['MAIL_API_KEY'] ?? '';
+
+        if ($apiKey === '') {
+            return new LogMailer($root . '/storage/mail');
+        }
+
+        return SymfonyMailer::fromDsn(
+            'resend+api://' . rawurlencode($apiKey) . '@default',
+            $_ENV['MAIL_FROM_ADDRESS'] ?? 'noreply@fantasyrecipes.co.uk',
+            $_ENV['MAIL_FROM_NAME'] ?? 'Fantasy Recipes',
+        );
     },
 
     // Used by App\Scraping\RecipeImporter (the shared pipeline behind both
