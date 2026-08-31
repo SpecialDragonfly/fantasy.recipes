@@ -995,7 +995,7 @@ button.tag-picker-save[hidden] {
     white-space: nowrap;
     text-align: center;
     letter-spacing: 0.02em;
-    font-size: clamp(2.95rem, 17.2vw, 5.25rem);
+    font-size: clamp(1rem, 7.2vw, 17.2rem);
     text-shadow: 3px 3px 0 rgba(0, 0, 0, 0.14);
 }
 
