@@ -138,7 +138,7 @@ $builder->addDefinitions([
     ClientInterface::class => function (): ClientInterface {
         $userAgent = ($_ENV['SCRAPER_USER_AGENT'] ?? '') !== ''
             ? $_ENV['SCRAPER_USER_AGENT']
-            : 'fantasy.recipes-scraper/1.0 (one-time personal-project recipe fact scrape)';
+            : 'fantasyrecipes importer (+https://fantasyrecipes.co.uk)';
 
         return new Client([
             'headers' => ['User-Agent' => $userAgent],

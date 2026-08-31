@@ -64,7 +64,7 @@ final class RecipeImporter
 
         $userAgent = ($_ENV['SCRAPER_USER_AGENT'] ?? '') !== ''
             ? $_ENV['SCRAPER_USER_AGENT']
-            : 'fantasy.recipes-importer/1.0 (personal-project single-recipe import)';
+            : 'fantasyrecipes importer (+https://fantasyrecipes.co.uk)';
 
         $robotsChecker = new RobotsTxtChecker($this->http);
         if (!$robotsChecker->isAllowedForUrl($userAgent, $url)) {
