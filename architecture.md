@@ -23,7 +23,13 @@ product decisions.
   reach it over the network, not via a Docker Compose `mysql` service.
 - **Local/test database:** SQLite, swapped in via config for running
   PHPUnit locally without a MySQL dependency.
-- **Migrations:** Phinx.
+- **Migrations:** Phinx — a **dev/deploy-only tool**, in `require-dev`, not
+  the runtime image. The app itself never touches Phinx (thin PDO
+  repositories only), and Phinx 0.16 can't run on the 32-bit ARM target at
+  all: it requires composer's `php-64bit` platform package, and its
+  14-digit `YYYYMMDDHHMMSS` migration versions overflow `PHP_INT_MAX` on
+  32-bit PHP. Migrations are run from a 64-bit machine against the target DB
+  (see Deployment & Networking).
 - **Linting:** PHPStan.
 - **Tests:** PHPUnit.
 - **Web framework:** Slim 4 (PSR-7/PSR-15), not a full-stack framework.
@@ -226,6 +232,27 @@ Implementation-level additions:
   Deliberately the simplest possible flow for a personal project; revisit
   only if build time on the Pi's own limited CPU becomes painful enough to
   justify building images elsewhere and pulling instead.
+- **Migrations at deploy time:** *not* `docker compose exec app vendor/bin/phinx`
+  — Phinx isn't in the runtime image and wouldn't run on 32-bit anyway (see
+  Migrations, above). Run them from a 64-bit box against the Pi's MariaDB
+  over an SSH tunnel:
+  ```
+  ssh -f -N -L 13306:127.0.0.1:3306 <pi>
+  # local .env with DB_HOST=127.0.0.1, DB_PORT=13306, prod DB_DATABASE/USER/PASSWORD
+  vendor/bin/phinx migrate -e production
+  ```
+  The Pi's MariaDB runs on the host (not in Docker) and listens on
+  `0.0.0.0:3306`; the tunnel avoids exposing it more widely.
+- **Server-local compose override:** `docker-compose.override.yml` on the Pi
+  (untracked) drops the dev `./:/app` bind mount so the container runs the
+  image-baked code + `vendor` + www-data-owned `storage` (otherwise the
+  mount shadows `/app/vendor` and Twig can't write its cache), and joins the
+  `web` container to the existing reverse proxy's `websites_mynet` network.
+- **Reverse proxy vhost:** `nginx/conf.d/fantasyrecipes.conf` in the
+  host's `~/Projects/websites` stack — `proxy_pass` to the
+  `fantasyrecipes_web` container by name over `websites_mynet`, TLS
+  terminated at that proxy (Let's Encrypt, renewed by its `renew-cert.sh`
+  cron). `www` 301s to the apex, which is canonical (`APP_URL`).
 
 ---
 
@@ -235,13 +262,18 @@ Implementation-level additions:
   dependencies. `RecipeSearch` is stubbed rather than exercised for real —
   see Search above.
 - **Migration portability gotcha:** Phinx migrations must run against both
-  MySQL (prod) and SQLite (local tests). Two MySQL-specific features don't
+  MySQL (prod) and SQLite (local tests). Three MySQL-specific things don't
   translate:
   - `ENUM` columns → use `VARCHAR` + app-level validation instead (also
     avoids the "adding an enum value is a migration" pain long-term).
   - `FULLTEXT INDEX` → skip the statement when the Phinx adapter is
     `sqlite` (`$this->getAdapter()->getAdapterType() === 'mysql'` guard in
     the migration).
+  - **FK column signedness** → Phinx's default `id` primary key is
+    `INT UNSIGNED` on MySQL, so every foreign-key column must be
+    `addColumn('...', 'integer', ['signed' => false])` or `addForeignKey`
+    fails with `errno 150`. SQLite ignores signedness, so the local suite
+    won't catch a mismatch — it only shows up against a real MySQL.
 - **Integration tests:** a smaller, separate suite that requires a real
   MySQL instance — covers `MysqlFulltextSearch` and anything else that's
   genuinely MySQL-specific. Not part of the fast local SQLite-backed suite.
