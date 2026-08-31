@@ -37,12 +37,19 @@ WORKDIR /app
 # Install dependencies first so this layer is cached across code-only
 # changes -- meaningful on the Pi's limited build CPU (see architecture.md,
 # Deploy process: `git pull` + rebuild in place, no external build service).
+#
+# --ignore-platform-req=php-64bit: the target hardware is a 32-bit ARM Pi, so
+# composer's virtual `php-64bit` package is absent, and robmorgan/phinx 0.16
+# declares `php-64bit >=8.1`. Phinx's 64-bit guard concerns big-integer
+# *data* handling; this project's migrations are pure DDL (CREATE TABLE),
+# which is unaffected on 32-bit. Everything else in the lock installs fine.
 COPY composer.json composer.lock* ./
-RUN composer install --no-dev --no-scripts --no-autoloader --prefer-dist
+RUN composer install --no-dev --no-scripts --no-autoloader --prefer-dist \
+    --ignore-platform-req=php-64bit
 
 COPY . .
 
-RUN composer dump-autoload --optimize \
+RUN composer dump-autoload --optimize --ignore-platform-req=php-64bit \
     && mkdir -p storage/uploads storage/cache \
     && chown -R www-data:www-data storage
 
