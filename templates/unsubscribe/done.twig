@@ -1,6 +1,6 @@
 {% extends 'layout.twig' %}
 
-{% block title %}{{ resubscribed ? 'Subscribed' : 'Unsubscribed' }} - fantasy.recipes{% endblock %}
+{% block title %}{{ resubscribed ? 'Subscribed' : 'Unsubscribed' }} - Fantasy Recipes{% endblock %}
 
 {% block content %}
     <section class="auth-form">
@@ -19,8 +19,8 @@
             </form>
         {% else %}
             <h1>Link not recognised</h1>
-            <p>That unsubscribe link isn't valid or has already been used.
-            If you have an account you can manage email preferences on your
+            <p>That unsubscribe link isn't valid. If you have an account you
+            can manage email preferences on your
             <a href="/account">account page</a>.</p>
         {% endif %}
     </section>
