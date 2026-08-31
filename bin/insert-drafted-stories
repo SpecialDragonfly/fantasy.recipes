@@ -4,10 +4,9 @@
 declare(strict_types=1);
 
 /**
- * One-off helper for the manual "I am the AI" Concierge-story drafting
- * pass (no CLAUDE_API_KEY is configured, so recipe:translate-draft's
- * Claude-API pattern can't run for real here). Reads a JSON array of
- * {recipe_id, narrator, body} from stdin and inserts each via
+ * Helper for the "Translate" pipeline step (spec.md -- Content Pipeline):
+ * Stories are drafted outside the app, then loaded here. Reads a JSON
+ * array of {recipe_id, narrator, body} from stdin and inserts each via
  * StoryRepository::create(), skipping any recipe_id that already has a
  * live Story (idempotent/resumable, same spirit as every other batch job
  * in this codebase).

@@ -4,7 +4,7 @@ Companion to `spec.md`. The **Narrator** field on a Recipe is picked from a
 fixed roster (`App\Recipe\Narrators`, kept in sync by hand with this doc) --
 not free text. This doc is that **house roster**: a curated set of
 recurring, well-developed personas for admin-authored Stories and for
-briefing the AI on `recipe:translate-draft` runs, so the corpus has a
+briefing whatever AI assistant the admin drafts with, so the corpus has a
 consistent cast of voices rather than sounding AI-generic. Adding a new
 persona means writing it up here (and its full profile in `narrators/`) and
 adding it to `App\Recipe\Narrators::NAMES` and `writerRoster()`

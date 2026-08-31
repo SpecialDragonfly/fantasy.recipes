@@ -65,8 +65,8 @@ product decisions.
   (`RecipeRepository`, `StoryRepository`, `TagRepository`, etc.),
   prepared statements throughout, `PDO::ATTR_EMULATE_PREPARES = false`,
   `utf8mb4` charset/collation.
-- **HTTP client:** `guzzlehttp/guzzle`, used for outbound calls to the
-  Anthropic Claude API.
+- **HTTP client:** `guzzlehttp/guzzle`, used for the outbound page fetch
+  and robots.txt check behind `recipe:import` / the admin import UI.
 - **Config:** `vlucas/phpdotenv`. Separate `.env` profiles for
   Docker/MySQL vs. local/SQLite. Canonical app domain is an env var (see
   Deployment & Networking) — never hardcoded.
@@ -127,12 +127,6 @@ being a second, disconnected toolchain.
   that works regardless. An "already imported" failure (the dedupe check,
   not an extraction failure) stays on the plain import form instead, where
   ticking "force" retries the same automated import.
-- **`recipe:translate-draft`** — batch job that calls the Claude API for
-  every recipe still missing a `NarratorRecipe`, writing one (and a matching
-  Story) in the assigned Narrator's voice. Run as a batch across many
-  recipes at once (fits "thousands of recipes" much better than a per-recipe
-  web button), with admin review happening afterward through the normal web
-  UI. **Not implemented yet** — still a stub.
 - **`recipe:normalize-temperatures`** — batch job rewriting every recipe's
   `OriginalInstructions`/`NarratorRecipe` temperature mentions to a
   consistent "Celsius (Fahrenheit)" order.

@@ -133,10 +133,13 @@ are an accepted, tolerable risk — no locking/reservation system.
    words, manually assessed for copyright-infringing aspects.
    `OriginalIngredients` is generally carried through close to verbatim (a
    list of ingredients is a fact, not an expression).
-3. **Translate** - A Narrator is assigned to the recipe. A manual call of
-   Claude then drafts a Story and, separately, writes `NarratorRecipe` in
-   the same voice. Both are just text on the still-`draft` recipe at this
-   point — there's no separate drafted/reviewed status to track.
+3. **Translate** - A Narrator is assigned to the recipe. The admin drafts a
+   Story and, separately, writes `NarratorRecipe` in that Narrator's voice,
+   working outside the app (an AI assistant is a fine drafting aid, but
+   there's no in-app integration) and loading the results via
+   `bin/insert-drafted-stories`. Both are just text on the still-`draft`
+   recipe at this point — there's no separate drafted/reviewed status to
+   track.
 4. **Review & Publish** — an admin reviews/edits `NarratorRecipe` and the
    Story, tags the recipe, and toggles `Status` to `published`.
 
