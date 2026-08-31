@@ -1,0 +1,64 @@
+{% extends 'layout.twig' %}
+
+{% block title %}Admin: Campaign #{{ campaign.id }} - Fantasy Recipes{% endblock %}
+
+{% block content %}
+    <section class="panel">
+        <p><a href="/admin/mail-queue">Back to the recipe-email queue</a></p>
+
+        <h1>Campaign #{{ campaign.id }}</h1>
+
+        <p>
+            <strong>{{ campaign.subject }}</strong> ({{ campaign.kind }})
+        </p>
+        <ul class="queue-recipes">
+            {% for title in campaign.recipe_titles %}<li>{{ title }}</li>{% endfor %}
+        </ul>
+        <p>
+            Status: {{ campaign.status }}
+            {% if campaign.last_error %}<br><small class="queue-error">{{ campaign.last_error }}</small>{% endif %}
+        </p>
+        <p>
+            {{ campaign.delivery_counts.sent }}/{{ campaign.recipients_total }} sent
+            {%- if campaign.delivery_counts.failed %}, {{ campaign.delivery_counts.failed }} failed{% endif %}
+            {%- if campaign.delivery_counts.pending %}, {{ campaign.delivery_counts.pending }} pending{% endif %}
+        </p>
+
+        <table class="queue-table">
+            <thead>
+                <tr>
+                    <th>#</th>
+                    <th>Recipient</th>
+                    <th>Status</th>
+                    <th>Sent at</th>
+                    <th>Action</th>
+                </tr>
+            </thead>
+            <tbody>
+                {% for d in deliveries %}
+                    <tr>
+                        <td>{{ d.id }}</td>
+                        <td>{{ d.recipient_email }}</td>
+                        <td>
+                            {{ d.status }}
+                            {% if d.error %}<br><small class="queue-error">{{ d.error }}</small>{% endif %}
+                        </td>
+                        <td>{{ d.sent_at ?? '-' }}</td>
+                        <td class="queue-actions">
+                            {% if d.status != 'sent' and campaign.status != 'cancelled' %}
+                                <form method="post"
+                                      action="/admin/mail-queue/{{ campaign.id }}/deliveries/{{ d.id }}/send"
+                                      class="inline-form">
+                                    {% include 'partials/_csrf.twig' %}
+                                    <button type="submit" class="link-button">Send</button>
+                                </form>
+                            {% else %}
+                                -
+                            {% endif %}
+                        </td>
+                    </tr>
+                {% endfor %}
+            </tbody>
+        </table>
+    </section>
+{% endblock %}

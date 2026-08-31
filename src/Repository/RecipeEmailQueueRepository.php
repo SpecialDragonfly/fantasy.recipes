@@ -190,6 +190,44 @@ final class RecipeEmailQueueRepository
     }
 
     /**
+     * Every delivery row for a campaign, newest status and all, for the
+     * per-recipient admin view.
+     *
+     * @return list<array{id: int, user_id: int, recipient_email: string, status: string, error: string|null, sent_at: string|null}>
+     */
+    public function listDeliveries(int $campaignId): array
+    {
+        $statement = $this->pdo->prepare(
+            'SELECT id, user_id, recipient_email, status, error, sent_at '
+            . 'FROM recipe_email_queue_deliveries WHERE queue_id = :id ORDER BY id ASC',
+        );
+        $statement->execute(['id' => $campaignId]);
+
+        /** @var list<array{id: int, user_id: int, recipient_email: string, status: string, error: string|null, sent_at: string|null}> */
+        return $statement->fetchAll();
+    }
+
+    /**
+     * One delivery row plus the campaign it belongs to, for the admin
+     * "send this one" button.
+     *
+     * @return array{id: int, queue_id: int, user_id: int, recipient_email: string, status: string}|null
+     */
+    public function findDelivery(int $deliveryId): ?array
+    {
+        $statement = $this->pdo->prepare(
+            'SELECT id, queue_id, user_id, recipient_email, status '
+            . 'FROM recipe_email_queue_deliveries WHERE id = :id',
+        );
+        $statement->execute(['id' => $deliveryId]);
+
+        /** @var array{id: int, queue_id: int, user_id: int, recipient_email: string, status: string}|false $row */
+        $row = $statement->fetch();
+
+        return $row === false ? null : $row;
+    }
+
+    /**
      * @return array<string, int> status => count, for the admin list
      */
     public function deliveryStatusCounts(int $campaignId): array

@@ -83,6 +83,33 @@ final class RecipeEmailQueueRepositoryTest extends TestCase
         self::assertSame(['pending' => 3, 'sent' => 0, 'failed' => 0], $this->repo->deliveryStatusCounts($id));
     }
 
+    public function testListDeliveriesReturnsEveryRowWithStatus(): void
+    {
+        $id = $this->campaign('2026-01-01 00:00:00', [], 2);
+        $first = $this->repo->pendingDeliveries($id)[0]['id'];
+        $this->repo->markDeliverySent($first);
+
+        $rows = $this->repo->listDeliveries($id);
+
+        self::assertCount(2, $rows);
+        self::assertSame('sent', $rows[0]['status']);
+        self::assertNotNull($rows[0]['sent_at']);
+        self::assertSame('pending', $rows[1]['status']);
+    }
+
+    public function testFindDeliveryCarriesItsCampaignId(): void
+    {
+        $id = $this->campaign('2026-01-01 00:00:00', [], 1);
+        $deliveryId = $this->repo->pendingDeliveries($id)[0]['id'];
+
+        $row = $this->repo->findDelivery($deliveryId);
+
+        self::assertNotNull($row);
+        self::assertSame($id, $row['queue_id']);
+        self::assertSame('pending', $row['status']);
+        self::assertNull($this->repo->findDelivery(999999));
+    }
+
     public function testListCampaignsIsNewestFirst(): void
     {
         $a = $this->campaign('2026-01-01 00:00:00');

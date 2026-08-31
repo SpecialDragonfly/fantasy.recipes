@@ -665,6 +665,30 @@ return function (App $app): void {
             ]);
         });
 
+        $group->get(
+            '/mail-queue/{id}',
+            function (Request $request, Response $response, array $args) use ($container): Response {
+                /** @var RecipeEmailQueueRepository $queue */
+                $queue = $container->get(RecipeEmailQueueRepository::class);
+                $id = (int) $args['id'];
+
+                $campaign = $queue->findCampaign($id);
+                if ($campaign === null) {
+                    Flash::add('error', 'No such campaign.');
+
+                    return $response->withHeader('Location', '/admin/mail-queue')->withStatus(302);
+                }
+
+                return Twig::fromRequest($request)->render($response, 'admin/mail_queue_detail.twig', [
+                    'campaign' => $campaign + [
+                        'recipe_titles' => $queue->recipeTitlesFor([$id])[$id] ?? [],
+                        'delivery_counts' => $queue->deliveryStatusCounts($id),
+                    ],
+                    'deliveries' => $queue->listDeliveries($id),
+                ]);
+            },
+        );
+
         $group->post('/mail-queue/check', function (Request $request, Response $response) use ($container): Response {
             /** @var RecipeNotifications $notifications */
             $notifications = $container->get(RecipeNotifications::class);
@@ -724,6 +748,27 @@ return function (App $app): void {
                     : 'Too late -- that campaign has already sent or is sending.');
 
                 return $response->withHeader('Location', '/admin/mail-queue')->withStatus(302);
+            },
+        );
+
+        $group->post(
+            '/mail-queue/{id}/deliveries/{deliveryId}/send',
+            function (Request $request, Response $response, array $args) use ($container): Response {
+                /** @var RecipeNotifications $notifications */
+                $notifications = $container->get(RecipeNotifications::class);
+                $result = $notifications->sendDelivery((int) $args['deliveryId']);
+
+                if ($result['missing']) {
+                    Flash::add('error', 'That recipient is already sent, or its campaign is not sendable.');
+                } else {
+                    Flash::add($result['failed'] ? 'error' : 'success', $result['failed']
+                        ? 'Send failed -- the error is on the recipient row.'
+                        : 'Sent to that recipient.');
+                }
+
+                return $response
+                    ->withHeader('Location', '/admin/mail-queue/' . (int) $args['id'])
+                    ->withStatus(302);
             },
         );
     })->add(new RequireRoleMiddleware(Roles::ADMIN, $container->get(UserRepository::class)));

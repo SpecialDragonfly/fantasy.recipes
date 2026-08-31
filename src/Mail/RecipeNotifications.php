@@ -100,31 +100,11 @@ final class RecipeNotifications
 
         $this->queue->setCampaignStatus($id, 'sending');
 
-        $recipes = $this->recipes->findByIds($this->queue->recipeIdsFor($id));
-        usort(
-            $recipes,
-            static fn (array $a, array $b): int => [$a['created_at'], $a['id']] <=> [$b['created_at'], $b['id']],
-        );
-
-        $siteUrl = rtrim($this->appUrl, '/');
+        $recipes = $this->orderedRecipesFor($id);
 
         foreach ($this->queue->pendingDeliveries($id) as $delivery) {
-            $user = $this->users->findById($delivery['user_id']);
-            $token = (string) ($user['unsubscribe_token'] ?? '');
-            $unsubscribeUrl = $siteUrl . '/unsubscribe?u=' . urlencode($token);
-            $body = $this->render((string) $campaign['kind'], $recipes, $token);
-
             try {
-                $this->mailer->send(
-                    (string) $delivery['recipient_email'],
-                    (string) $campaign['subject'],
-                    $body,
-                    [
-                        // RFC 8058 -- Gmail/Yahoo one-click unsubscribe.
-                        'List-Unsubscribe' => '<' . $unsubscribeUrl . '>',
-                        'List-Unsubscribe-Post' => 'List-Unsubscribe=One-Click',
-                    ],
-                );
+                $this->deliver($campaign, $recipes, $delivery);
                 $this->queue->markDeliverySent((int) $delivery['id']);
                 $result['sent']++;
             } catch (Throwable $e) {
@@ -140,6 +120,92 @@ final class RecipeNotifications
         $this->queue->markCampaignSent($id);
 
         return $result;
+    }
+
+    /**
+     * Send one specific delivery row now, whatever the campaign's overall
+     * status (unless it's been cancelled). For the admin "send this one"
+     * button -- re-driving a single stuck recipient without touching the
+     * rest. If that clears the last outstanding delivery, the campaign is
+     * closed out as `sent`.
+     *
+     * @return array{sent: int, failed: int, missing: bool}
+     */
+    public function sendDelivery(int $deliveryId): array
+    {
+        $delivery = $this->queue->findDelivery($deliveryId);
+        if ($delivery === null || $delivery['status'] === 'sent') {
+            return ['sent' => 0, 'failed' => 0, 'missing' => true];
+        }
+
+        $campaign = $this->queue->findCampaign($delivery['queue_id']);
+        if ($campaign === null || $campaign['status'] === 'cancelled') {
+            return ['sent' => 0, 'failed' => 0, 'missing' => true];
+        }
+
+        $campaignId = (int) $campaign['id'];
+
+        try {
+            $this->deliver($campaign, $this->orderedRecipesFor($campaignId), $delivery);
+        } catch (Throwable $e) {
+            $this->queue->markDeliveryFailed($deliveryId, $e->getMessage());
+
+            return ['sent' => 0, 'failed' => 1, 'missing' => false];
+        }
+
+        $this->queue->markDeliverySent($deliveryId);
+
+        $counts = $this->queue->deliveryStatusCounts($campaignId);
+        if ($counts['pending'] === 0 && $counts['failed'] === 0) {
+            $this->queue->markCampaignSent($campaignId);
+        }
+
+        return ['sent' => 1, 'failed' => 0, 'missing' => false];
+    }
+
+    /**
+     * The campaign's recipes, in publish order -- the order they appear in
+     * a digest email.
+     *
+     * @return list<array<string, mixed>>
+     */
+    private function orderedRecipesFor(int $campaignId): array
+    {
+        $recipes = $this->recipes->findByIds($this->queue->recipeIdsFor($campaignId));
+        usort(
+            $recipes,
+            static fn (array $a, array $b): int => [$a['created_at'], $a['id']] <=> [$b['created_at'], $b['id']],
+        );
+
+        return $recipes;
+    }
+
+    /**
+     * Render and send one delivery. Throws whatever the mailer throws --
+     * callers decide whether that pauses a whole campaign or just fails the
+     * one row.
+     *
+     * @param array<string, mixed>        $campaign
+     * @param list<array<string, mixed>>  $recipes
+     * @param array{id: int, user_id: int, recipient_email: string, ...} $delivery
+     */
+    private function deliver(array $campaign, array $recipes, array $delivery): void
+    {
+        $siteUrl = rtrim($this->appUrl, '/');
+        $user = $this->users->findById((int) $delivery['user_id']);
+        $token = (string) ($user['unsubscribe_token'] ?? '');
+        $unsubscribeUrl = $siteUrl . '/unsubscribe?u=' . urlencode($token);
+
+        $this->mailer->send(
+            (string) $delivery['recipient_email'],
+            (string) $campaign['subject'],
+            $this->render((string) $campaign['kind'], $recipes, $token),
+            [
+                // RFC 8058 -- Gmail/Yahoo one-click unsubscribe.
+                'List-Unsubscribe' => '<' . $unsubscribeUrl . '>',
+                'List-Unsubscribe-Post' => 'List-Unsubscribe=One-Click',
+            ],
+        );
     }
 
     public function cancelCampaign(int $id): bool

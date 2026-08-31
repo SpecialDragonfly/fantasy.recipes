@@ -30,7 +30,7 @@
                 <tbody>
                     {% for c in campaigns %}
                         <tr>
-                            <td>{{ c.id }}</td>
+                            <td><a href="/admin/mail-queue/{{ c.id }}">{{ c.id }}</a></td>
                             <td>{{ c.kind }}</td>
                             <td>
                                 <strong>{{ c.subject }}</strong>
@@ -39,8 +39,10 @@
                                 </ul>
                             </td>
                             <td>
-                                {{ c.delivery_counts.sent }}/{{ c.recipients_total }} sent
-                                {%- if c.delivery_counts.failed %}, {{ c.delivery_counts.failed }} failed{% endif %}
+                                <a href="/admin/mail-queue/{{ c.id }}">
+                                    {{ c.delivery_counts.sent }}/{{ c.recipients_total }} sent
+                                    {%- if c.delivery_counts.failed %}, {{ c.delivery_counts.failed }} failed{% endif %}
+                                </a>
                             </td>
                             <td>
                                 {{ c.status }}

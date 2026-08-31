@@ -151,7 +151,11 @@ being a second, disconnected toolchain.
 `App\Mail\RecipeNotifications`, admin at `/admin/mail-queue`): a campaign
 row plus one `recipe_email_queue_deliveries` row per recipient (snapshotted
 at enqueue time). Purpose-built as a dead-letter queue -- provider rate
-limits leave failed/unsent deliveries visible and resumable. Every
+limits leave failed/unsent deliveries visible and resumable. The admin list
+row opens a per-recipient view (`/admin/mail-queue/{id}`) with a "Send"
+button on each pending/failed delivery, for re-driving one stuck address
+without touching the rest (`RecipeNotifications::sendDelivery`); clearing
+the last outstanding row closes the campaign out as `sent`. Every
 marketing email carries a `List-Unsubscribe` / `List-Unsubscribe-Post`
 header (RFC 8058) and a footer link to `/unsubscribe?u=<users.unsubscribe_token>`
 (no login).

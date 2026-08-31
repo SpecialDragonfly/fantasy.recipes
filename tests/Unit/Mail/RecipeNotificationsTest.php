@@ -184,6 +184,90 @@ final class RecipeNotificationsTest extends TestCase
         self::assertSame('cancelled', $this->campaignRow($id)['status']);
         self::assertCount(1, $this->recipes->listPublishedAwaitingAnnouncement());
     }
+
+    public function testSendDeliveryTargetsOneRecipientAndLeavesTheRest(): void
+    {
+        $this->publishedRecipe('gnocchi');
+        $this->optedInUser('alice');
+        $this->optedInUser('bob');
+        $id = (int) $this->notifications->enqueuePending();
+
+        $first = $this->queue->pendingDeliveries($id)[0];
+        $result = $this->notifications->sendDelivery($first['id']);
+
+        self::assertSame(['sent' => 1, 'failed' => 0, 'missing' => false], $result);
+        self::assertCount(1, $this->mailer->sent);
+        self::assertSame($first['recipient_email'], $this->mailer->sent[0]['to']);
+
+        $counts = $this->queue->deliveryStatusCounts($id);
+        self::assertSame(1, $counts['sent']);
+        self::assertSame(1, $counts['pending']);
+        // one recipient still outstanding, so the campaign stays open
+        self::assertSame('pending', $this->campaignRow($id)['status']);
+    }
+
+    public function testSendDeliveryClosesTheCampaignWhenItWasTheLastOutstanding(): void
+    {
+        $this->publishedRecipe('r1');
+        $this->optedInUser('alice');
+        $id = (int) $this->notifications->enqueuePending();
+
+        $only = $this->queue->pendingDeliveries($id)[0];
+        $this->notifications->sendDelivery($only['id']);
+
+        self::assertSame('sent', $this->campaignRow($id)['status']);
+    }
+
+    public function testSendDeliveryRecordsAFailureWithoutPausingTheCampaign(): void
+    {
+        $this->publishedRecipe('r1');
+        $this->optedInUser('alice');
+        $this->optedInUser('bob');
+        $id = (int) $this->notifications->enqueuePending();
+
+        $this->mailer->failFor = 'alice@example.com';
+        $alice = null;
+        foreach ($this->queue->pendingDeliveries($id) as $d) {
+            if ($d['recipient_email'] === 'alice@example.com') {
+                $alice = $d;
+            }
+        }
+        self::assertNotNull($alice);
+
+        $result = $this->notifications->sendDelivery($alice['id']);
+
+        self::assertSame(['sent' => 0, 'failed' => 1, 'missing' => false], $result);
+        self::assertSame(1, $this->queue->deliveryStatusCounts($id)['failed']);
+        self::assertSame('pending', $this->campaignRow($id)['status']);
+    }
+
+    public function testSendDeliveryIsANoOpForAnAlreadySentRow(): void
+    {
+        $this->publishedRecipe('r1');
+        $this->optedInUser('alice');
+        $id = (int) $this->notifications->enqueuePending();
+        $only = $this->queue->pendingDeliveries($id)[0];
+
+        $this->notifications->sendDelivery($only['id']);
+        $again = $this->notifications->sendDelivery($only['id']);
+
+        self::assertTrue($again['missing']);
+        self::assertCount(1, $this->mailer->sent);
+    }
+
+    public function testSendDeliveryRefusesACancelledCampaign(): void
+    {
+        $this->publishedRecipe('r1');
+        $this->optedInUser('alice');
+        $id = (int) $this->notifications->enqueuePending();
+        $only = $this->queue->pendingDeliveries($id)[0];
+
+        $this->notifications->cancelCampaign($id);
+        $result = $this->notifications->sendDelivery($only['id']);
+
+        self::assertTrue($result['missing']);
+        self::assertCount(0, $this->mailer->sent);
+    }
 }
 
 /**
