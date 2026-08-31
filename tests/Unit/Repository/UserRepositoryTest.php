@@ -83,4 +83,57 @@ final class UserRepositoryTest extends TestCase
         $this->expectException(\PDOException::class);
         $this->repository->create('erin2', 'erin@example.com', 'password123');
     }
+
+    public function testCreateDefaultsToNoMarketingConsentButAlwaysGetsAnUnsubscribeToken(): void
+    {
+        $user = $this->repository->findById(
+            $this->repository->create('frank', 'frank@example.com', 'password123'),
+        );
+
+        self::assertNotNull($user);
+        self::assertSame(0, (int) $user['marketing_opt_in']);
+        self::assertNull($user['marketing_opt_in_at']);
+        self::assertMatchesRegularExpression('/^[0-9a-f]{32}$/', (string) $user['unsubscribe_token']);
+    }
+
+    public function testCreateWithMarketingOptInSetsTheFlagAndStampsTheConsentTime(): void
+    {
+        $user = $this->repository->findById(
+            $this->repository->create('grace', 'grace@example.com', 'password123', true),
+        );
+
+        self::assertNotNull($user);
+        self::assertSame(1, (int) $user['marketing_opt_in']);
+        self::assertNotNull($user['marketing_opt_in_at']);
+    }
+
+    public function testSetMarketingOptInTogglesFlagAndTimestampBothWays(): void
+    {
+        $id = $this->repository->create('heidi', 'heidi@example.com', 'password123');
+
+        $this->repository->setMarketingOptIn($id, true);
+        $user = $this->repository->findById($id);
+        self::assertNotNull($user);
+        self::assertSame(1, (int) $user['marketing_opt_in']);
+        self::assertNotNull($user['marketing_opt_in_at']);
+
+        $this->repository->setMarketingOptIn($id, false);
+        $user = $this->repository->findById($id);
+        self::assertNotNull($user);
+        self::assertSame(0, (int) $user['marketing_opt_in']);
+        self::assertNull($user['marketing_opt_in_at']);
+    }
+
+    public function testFindByUnsubscribeTokenRoundTrips(): void
+    {
+        $id = $this->repository->create('ivan', 'ivan@example.com', 'password123');
+        $created = $this->repository->findById($id);
+        self::assertNotNull($created);
+        $token = (string) $created['unsubscribe_token'];
+
+        $found = $this->repository->findByUnsubscribeToken($token);
+        self::assertNotNull($found);
+        self::assertSame($id, (int) $found['id']);
+        self::assertNull($this->repository->findByUnsubscribeToken('deadbeef'));
+    }
 }

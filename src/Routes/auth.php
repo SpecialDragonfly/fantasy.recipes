@@ -29,6 +29,8 @@ return function (App $app): void {
         $username = trim($data['username'] ?? '');
         $email = trim($data['email'] ?? '');
         $password = $data['password'] ?? '';
+        // Unticked by default; only present in the body when the box is ticked.
+        $marketingOptIn = isset($data['marketing_opt_in']);
 
         $errors = [];
 
@@ -58,11 +60,11 @@ return function (App $app): void {
         if ($errors !== []) {
             return Twig::fromRequest($request)->render($response->withStatus(422), 'auth/register.twig', [
                 'errors' => $errors,
-                'old' => ['username' => $username, 'email' => $email],
+                'old' => ['username' => $username, 'email' => $email, 'marketing_opt_in' => $marketingOptIn],
             ]);
         }
 
-        $userId = $userRepository->create($username, $email, $password);
+        $userId = $userRepository->create($username, $email, $password, $marketingOptIn);
         $user = $userRepository->findById($userId);
 
         if ($user !== null) {

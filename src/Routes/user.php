@@ -58,6 +58,30 @@ return function (App $app): void {
     }
 
     $app->group('', function ($group) use ($container): void {
+        // --- Account: the one editable setting is marketing-email consent
+        //     (see db/migrations/20260831140000_add_marketing_opt_in_to_users.php).
+        $group->get('/account', function (Request $request, Response $response) use ($container): Response {
+            /** @var UserRepository $users */
+            $users = $container->get(UserRepository::class);
+
+            return Twig::fromRequest($request)->render($response, 'account/index.twig', [
+                'account' => $users->findById((int) SessionAuth::id()),
+            ]);
+        });
+
+        $group->post('/account', function (Request $request, Response $response) use ($container): Response {
+            /** @var array<string, mixed> $data */
+            $data = (array) $request->getParsedBody();
+
+            /** @var UserRepository $users */
+            $users = $container->get(UserRepository::class);
+            $users->setMarketingOptIn((int) SessionAuth::id(), isset($data['marketing_opt_in']));
+
+            Flash::add('success', 'Your preferences have been saved.');
+
+            return $response->withHeader('Location', '/account')->withStatus(302);
+        });
+
         $group->get('/grimoire', function (Request $request, Response $response) use ($container): Response {
             /** @var GrimoireRepository $grimoire */
             $grimoire = $container->get(GrimoireRepository::class);

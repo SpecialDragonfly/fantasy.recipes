@@ -22,6 +22,7 @@
         <a href="/writers">Writers</a>
         {% if current_user %}
             <a href="/grimoire">Grimoire</a>
+            <a href="/account">Account</a>
         {% endif %}
         {% if current_user and current_user.role == 'admin' %}
             <a href="/admin">Admin</a>

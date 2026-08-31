@@ -166,6 +166,16 @@ Implementation-level additions:
 - There is no `images` table / recipe image upload feature currently — it
   was removed as part of the recipes-table redesign and would need to be
   rebuilt as its own piece of work if wanted again.
+- `users.marketing_opt_in` / `marketing_opt_in_at` / `unsubscribe_token`
+  (migration `20260831…`): first-party marketing-email consent only
+  ("email me when a new recipe is published"). Opt-in defaults to false
+  and is an active tick at registration or on `/account` — never assumed
+  (UK GDPR/PECR); `marketing_opt_in_at` records when consent was last
+  given so it can be demonstrated, and is nulled on opt-out. Every user
+  gets an `unsubscribe_token` (generated in `UserRepository::create`) for
+  a future no-login opt-out link — the marketing email itself, and the
+  route that consumes the token, aren't built yet. Data is not shared with
+  third parties.
 
 ---
 

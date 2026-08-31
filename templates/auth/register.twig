@@ -25,6 +25,13 @@
             <input type="password" id="password" name="password"
                    required minlength="8" autocomplete="new-password">
 
+            <label class="checkbox-field">
+                <input type="checkbox" name="marketing_opt_in" value="1"
+                       {{ old.marketing_opt_in|default(false) ? 'checked' : '' }}>
+                <span>Email me when new recipes are published. You can turn
+                this off any time from your account.</span>
+            </label>
+
             <button type="submit">Create account</button>
         </form>
         <p>Already have an account? <a href="/login">Login</a>.</p>

@@ -428,6 +428,22 @@ main {
     font-size: 0.9rem;
 }
 
+/* Checkbox + wrapped label as one row (marketing opt-in on register /
+   account). Overrides .auth-form label's block + bold. */
+.auth-form .checkbox-field {
+    display: flex;
+    gap: 0.55rem;
+    align-items: flex-start;
+    margin-top: 1.25rem;
+    font-weight: normal;
+    font-size: 0.95rem;
+}
+
+.auth-form .checkbox-field input {
+    flex: 0 0 auto;
+    margin-top: 0.2rem;
+}
+
 /* Login page: "Create an account" + "Forgot your password?" promoted from a
    one-line footnote to proper secondary actions under the form. */
 .auth-alt {
