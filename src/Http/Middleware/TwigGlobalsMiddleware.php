@@ -36,24 +36,29 @@ final class TwigGlobalsMiddleware implements MiddlewareInterface
         $environment->addGlobal('current_user', SessionAuth::user());
         $environment->addGlobal('flash_messages', Flash::consume());
         $environment->addGlobal('request', $request);
-        $environment->addGlobal('asset_version', self::cssVersion());
+        $environment->addGlobal('asset_version', self::assetVersion());
 
         return $handler->handle($request);
     }
 
     /**
-     * Cache-busting query string for /css/site.css. Nginx serves it with
+     * Cache-busting query string for /css/site.css and /js/site.js (both
+     * templates append `?v={{ asset_version }}`). Nginx serves them with
      * only ETag/Last-Modified (no explicit Cache-Control -- see
      * docker/nginx/default.conf), which leaves a browser free to keep
      * using a stale cached copy across a normal reload without ever
-     * re-checking with the server. Appending the file's own mtime forces a
-     * fresh URL (and therefore a fresh fetch) exactly when the file
-     * actually changes, with no server-side cache-header change needed.
+     * re-checking with the server. Using the newest mtime of the two
+     * forces a fresh URL (and therefore a fresh fetch) whenever either
+     * file changes, with no server-side cache-header change needed.
      */
-    private static function cssVersion(): string
+    private static function assetVersion(): string
     {
-        $mtime = @filemtime(dirname(__DIR__, 3) . '/public/css/site.css');
+        $root = dirname(__DIR__, 3);
+        $mtimes = array_filter([
+            @filemtime($root . '/public/css/site.css'),
+            @filemtime($root . '/public/js/site.js'),
+        ], static fn ($m) => $m !== false);
 
-        return $mtime !== false ? (string) $mtime : '0';
+        return $mtimes === [] ? '0' : (string) max($mtimes);
     }
 }
