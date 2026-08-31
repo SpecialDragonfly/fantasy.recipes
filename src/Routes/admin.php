@@ -8,7 +8,9 @@ use App\Http\Flash;
 use App\Http\Middleware\RequireRoleMiddleware;
 use App\Mail\RecipeNotifications;
 use App\Recipe\Narrators;
+use App\Repository\LoginEventRepository;
 use App\Repository\RecipeEmailQueueRepository;
+use App\Repository\RecipeViewRepository;
 use App\Repository\RecipeRepository;
 use App\Repository\StoryRepository;
 use App\Repository\TagRepository;
@@ -578,6 +580,25 @@ return function (App $app): void {
                 return $response->withHeader('Location', '/admin/users')->withStatus(302);
             },
         );
+
+        // --- Metrics ------------------------------------------------------
+        //
+        // First-party only -- nothing leaves the box. Daily login tally
+        // (App\Repository\LoginEventRepository) plus recipe-view counts and
+        // the popular-recipes leaderboard (App\Repository\RecipeViewRepository).
+
+        $group->get('/metrics', function (Request $request, Response $response) use ($container): Response {
+            /** @var LoginEventRepository $loginEvents */
+            $loginEvents = $container->get(LoginEventRepository::class);
+            /** @var RecipeViewRepository $recipeViews */
+            $recipeViews = $container->get(RecipeViewRepository::class);
+
+            return Twig::fromRequest($request)->render($response, 'admin/metrics.twig', [
+                'daily_logins' => $loginEvents->dailyCounts(90),
+                'daily_recipe_views' => $recipeViews->dailyTotals(90),
+                'top_recipes' => $recipeViews->topRecipes(50),
+            ]);
+        });
 
         // --- Tags -------------------------------------------------------------
         //

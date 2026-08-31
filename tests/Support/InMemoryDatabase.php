@@ -73,6 +73,17 @@ final class InMemoryDatabase
             )',
         );
 
+        // See db/migrations/20260831180000_create_login_events_table.php.
+        $pdo->exec(
+            'CREATE TABLE login_events (
+                id INTEGER PRIMARY KEY AUTOINCREMENT,
+                user_id INTEGER NOT NULL,
+                logged_in_at DATETIME NOT NULL,
+                FOREIGN KEY (user_id) REFERENCES users(id) ON DELETE CASCADE
+            )',
+        );
+        $pdo->exec('CREATE INDEX idx_login_events_logged_in_at ON login_events(logged_in_at)');
+
         $pdo->exec(
             'CREATE TABLE tags (
                 id INTEGER PRIMARY KEY AUTOINCREMENT,
@@ -137,6 +148,18 @@ final class InMemoryDatabase
                 FOREIGN KEY (recipe_id) REFERENCES recipes(id) ON DELETE CASCADE
             )',
         );
+
+        // See db/migrations/20260831190000_create_recipe_views_table.php.
+        $pdo->exec(
+            'CREATE TABLE recipe_views (
+                id INTEGER PRIMARY KEY AUTOINCREMENT,
+                recipe_id INTEGER NOT NULL,
+                viewed_at DATETIME NOT NULL,
+                FOREIGN KEY (recipe_id) REFERENCES recipes(id) ON DELETE CASCADE
+            )',
+        );
+        $pdo->exec('CREATE INDEX idx_recipe_views_viewed_at ON recipe_views(viewed_at)');
+        $pdo->exec('CREATE INDEX idx_recipe_views_recipe_id ON recipe_views(recipe_id)');
 
         // See db/migrations/20260824090000_create_personal_recipes_table.php
         // -- a user's own private recipes, deliberately separate from

@@ -1,0 +1,85 @@
+{% extends 'layout.twig' %}
+
+{% block title %}Admin: Metrics - Fantasy Recipes{% endblock %}
+
+{% block content %}
+    <section class="panel">
+        <h1>Metrics</h1>
+        <p><small>First-party only. Nothing here is sent to a third party.
+        Recipe views exclude bots and your own admin views.</small></p>
+
+        <h2>Popular recipes</h2>
+        {% if top_recipes|length %}
+            <table class="queue-table">
+                <thead>
+                    <tr>
+                        <th>Recipe</th>
+                        <th>7 days</th>
+                        <th>30 days</th>
+                        <th>All time</th>
+                    </tr>
+                </thead>
+                <tbody>
+                    {% for r in top_recipes %}
+                        <tr>
+                            <td><a href="/recipes/{{ r.slug }}">{{ r.title }}</a></td>
+                            <td>{{ r.views_7d }}</td>
+                            <td>{{ r.views_30d }}</td>
+                            <td>{{ r.views_all }}</td>
+                        </tr>
+                    {% endfor %}
+                </tbody>
+            </table>
+        {% else %}
+            <p>No recipe views recorded yet.</p>
+        {% endif %}
+
+        <h2>Recipe views per day</h2>
+        <p><small>Last 90 days, all recipes combined.</small></p>
+        {% if daily_recipe_views|length %}
+            <table class="queue-table">
+                <thead>
+                    <tr>
+                        <th>Day</th>
+                        <th>Views</th>
+                    </tr>
+                </thead>
+                <tbody>
+                    {% for row in daily_recipe_views %}
+                        <tr>
+                            <td>{{ row.day }}</td>
+                            <td>{{ row.views }}</td>
+                        </tr>
+                    {% endfor %}
+                </tbody>
+            </table>
+        {% else %}
+            <p>No recipe views recorded yet.</p>
+        {% endif %}
+
+        <h2>Logins per day</h2>
+        <p><small>Last 90 days. "Users" counts each account once per day; "Logins" counts every sign-in.</small></p>
+        {% if daily_logins|length %}
+            <table class="queue-table">
+                <thead>
+                    <tr>
+                        <th>Day</th>
+                        <th>Users</th>
+                        <th>Logins</th>
+                    </tr>
+                </thead>
+                <tbody>
+                    {% for row in daily_logins %}
+                        <tr>
+                            <td>{{ row.day }}</td>
+                            <td>{{ row.distinct_users }}</td>
+                            <td>{{ row.total_logins }}</td>
+                        </tr>
+                    {% endfor %}
+                </tbody>
+            </table>
+        {% else %}
+            <p>No logins recorded yet.</p>
+        {% endif %}
+    </section>
+{% endblock %}

@@ -198,6 +198,23 @@ Implementation-level additions:
   No backfill — pre-existing accounts read as "never" until next sign-in.
   Shown on the admin users page (`/admin/users`), a read + hard-delete-only
   view; delete cascades the user's own rows and NULLs any Story authorship.
+- `login_events` (migration `20260831…`, `LoginEventRepository`): one row
+  per successful sign-in (`user_id`, `logged_in_at`), written next to
+  `touchLastLogin()`. First-party analytics only — nothing leaves the box.
+  Kept as raw events, not a pre-aggregated daily table, so other cuts stay
+  possible and the write is a portable `INSERT`. The admin metrics page
+  (`/admin/metrics`) shows `dailyCounts()` — distinct users and total
+  logins per day for the last 90 days. FK is `ON DELETE CASCADE`, so
+  deleting a user retroactively lowers past days' distinct-user counts;
+  acceptable at this scale.
+- `recipe_views` (migration `20260831…`, `RecipeViewRepository`): one row
+  per human view of a published recipe (`recipe_id`, `viewed_at`), written
+  from `src/Routes/public.php`. Bot hits (`CrawlerAudience::isMachine`) and
+  admin views are filtered out before the write, so the counts read as
+  reader interest. Same raw-events rationale as `login_events`. The metrics
+  page shows the popular-recipes leaderboard (`topRecipes()` — 7-/30-/all-day
+  view counts) and site-wide views per day (`dailyTotals()`). FK
+  `ON DELETE CASCADE` — deleting a recipe drops its view history.
 
 ---
 

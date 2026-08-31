@@ -4,6 +4,7 @@ declare(strict_types=1);
 
 use App\Auth\SessionAuth;
 use App\Http\Flash;
+use App\Repository\LoginEventRepository;
 use App\Repository\UserRepository;
 use Psr\Http\Message\ResponseInterface as Response;
 use Psr\Http\Message\ServerRequestInterface as Request;
@@ -70,6 +71,7 @@ return function (App $app): void {
         if ($user !== null) {
             SessionAuth::login($user);
             $userRepository->touchLastLogin($userId);
+            $container->get(LoginEventRepository::class)->record($userId);
         }
 
         Flash::add('success', sprintf('Welcome to fantasy.recipes, %s.', $username));
@@ -107,6 +109,7 @@ return function (App $app): void {
 
         SessionAuth::login($user);
         $userRepository->touchLastLogin((int) $user['id']);
+        $container->get(LoginEventRepository::class)->record((int) $user['id']);
         Flash::add('success', sprintf('Welcome back, %s.', $user['username']));
 
         $redirectTo = '/';

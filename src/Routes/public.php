@@ -7,6 +7,7 @@ use App\Http\CrawlerAudience;
 use App\Http\RecipeJsonLd;
 use App\Repository\GrimoireRepository;
 use App\Repository\RecipeRepository;
+use App\Repository\RecipeViewRepository;
 use App\Repository\StoryRepository;
 use App\Repository\TagRepository;
 use App\Repository\UserRepository;
@@ -90,6 +91,14 @@ return function (App $app): void {
 
         if ($recipe === null || $recipe['status'] !== 'published') {
             return Twig::fromRequest($request)->render($response->withStatus(404), 'not_found.twig');
+        }
+
+        // In-house popularity metric (admin at /admin/metrics). Skip bots
+        // and the admin's own review passes so the count reflects reader
+        // interest, not crawler noise.
+        if (!SessionAuth::isAdmin()
+            && !CrawlerAudience::isMachine($request->getHeaderLine('User-Agent'))) {
+            $container->get(RecipeViewRepository::class)->record((int) $recipe['id']);
         }
 
         $story = $recipe['story_id'] !== null ? $stories->findById((int) $recipe['story_id']) : null;
