@@ -27,32 +27,7 @@
 <body class="landing">
     <header class="landing-hero">
         <h1>Fantasy Recipes</h1>
-
-        <details class="landing-menu">
-            <summary>Menu</summary>
-            <div class="landing-menu-panel">
-                <a href="/recipes">Recipes</a>
-                <a href="/writers">Writers</a>
-                {% if current_user %}
-                    <a href="/grimoire">Grimoire</a>
-                {% endif %}
-                {% if current_user and current_user.role == 'admin' %}
-                    <a href="/admin">Admin</a>
-                {% endif %}
-                {% if current_user %}
-                    <form class="landing-menu-logout" method="post" action="/logout">
-                        {% include 'partials/_csrf.twig' %}
-                        <button type="submit">Logout</button>
-                    </form>
-                {% else %}
-                    <a href="/login">Login</a>
-                {% endif %}
-                <div class="landing-menu-theme" role="group" aria-label="Theme">
-                    <button type="button" data-set-theme="light">Light</button>
-                    <button type="button" data-set-theme="dark">Dark</button>
-                </div>
-            </div>
-        </details>
+        {% include 'partials/_menu.twig' %}
     </header>
 
     <main class="landing-cards">

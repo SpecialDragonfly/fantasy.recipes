@@ -5,7 +5,6 @@
 
     var STORAGE_KEY = 'fantasy-recipes-theme';
     var root = document.documentElement;
-    var toggle = document.getElementById('theme-toggle');
 
     function applyTheme(theme) {
         if (theme === 'dark' || theme === 'light') {
@@ -33,24 +32,11 @@
 
     applyTheme(currentTheme());
 
-    if (toggle) {
-        toggle.addEventListener('click', function () {
-            var next = root.getAttribute('data-theme') === 'dark' ? 'light' : 'dark';
-            applyTheme(next);
-            try {
-                window.localStorage.setItem(STORAGE_KEY, next);
-            } catch (e) {
-                // Ignore -- theme just won't persist across visits.
-            }
-        });
-    }
-
-    // ---- Landing page: explicit Light/Dark buttons + "Menu" dropdown ------
+    // ---- Theme: Light/Dark buttons in the "Menu" dropdown ----------------
     //
-    // The landing (templates/home.twig) has no header, so no #theme-toggle.
-    // Instead its "Menu" dropdown carries two buttons, data-set-theme="light"
-    // / "dark", which set the theme directly (rather than flipping it) and
-    // reuse the same applyTheme + STORAGE_KEY as the header toggle above.
+    // partials/_menu.twig carries two buttons, data-set-theme="light" /
+    // "dark", which set the theme directly and persist it. (There is no
+    // header toggle any more -- the Menu dropdown is the only nav.)
     var setThemeButtons = document.querySelectorAll('[data-set-theme]');
 
     function reflectActiveTheme() {

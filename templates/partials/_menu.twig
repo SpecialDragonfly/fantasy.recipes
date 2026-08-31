@@ -1,0 +1,42 @@
+{#
+  The site's only navigation: a "Menu" <details> dropdown pinned to the
+  top-right of the page. Used by home.twig (inside the hero) and by
+  layout.twig (floating over every other page) -- one definition.
+
+  Params:
+   - show_home (default false): render a "Home" link at the top. Pass true
+     everywhere except the landing itself.
+
+  Visibility: Grimoire only when logged in; Admin only for a logged-in
+  admin; Login (guest) <-> Logout (logged in, POST + CSRF). Theme buttons
+  are wired in site.js (data-set-theme) -- same applyTheme/localStorage the
+  old header #theme-toggle used.
+#}
+<details class="landing-menu">
+    <summary>Menu</summary>
+    <div class="landing-menu-panel">
+        {% if show_home|default(false) %}
+            <a href="/">Home</a>
+        {% endif %}
+        <a href="/recipes">Recipes</a>
+        <a href="/writers">Writers</a>
+        {% if current_user %}
+            <a href="/grimoire">Grimoire</a>
+        {% endif %}
+        {% if current_user and current_user.role == 'admin' %}
+            <a href="/admin">Admin</a>
+        {% endif %}
+        {% if current_user %}
+            <form class="landing-menu-logout" method="post" action="/logout">
+                {% include 'partials/_csrf.twig' %}
+                <button type="submit">Logout</button>
+            </form>
+        {% else %}
+            <a href="/login">Login</a>
+        {% endif %}
+        <div class="landing-menu-theme" role="group" aria-label="Theme">
+            <button type="button" data-set-theme="light">Light</button>
+            <button type="button" data-set-theme="dark">Dark</button>
+        </div>
+    </div>
+</details>

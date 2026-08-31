@@ -7,36 +7,11 @@
     <link rel="stylesheet" href="/css/site.css?v={{ asset_version }}">
     {% block head_extra %}{% endblock %}
 </head>
-<body>
-<header class="site-header">
-    <nav class="site-nav">
-        <a href="/" class="site-brand">fantasy.recipes</a>
-        <ul class="site-nav-links">
-            <li><a href="/recipes">Recipes</a></li>
-            <li><a href="/writers">Our Writers</a></li>
-            <li><a href="/search">Search</a></li>
-            {% if current_user %}
-                <li><a href="/grimoire">Grimoire</a></li>
-                {% if current_user.role == 'admin' %}
-                    <li><a href="/admin">Admin</a></li>
-                {% endif %}
-                <li class="site-nav-user">{{ current_user.username }}</li>
-                <li>
-                    <form method="post" action="/logout" class="inline-form">
-                        {% include 'partials/_csrf.twig' %}
-                        <button type="submit" class="link-button">Logout</button>
-                    </form>
-                </li>
-            {% else %}
-                <li><a href="/login">Login</a></li>
-                <li><a href="/register">Register</a></li>
-            {% endif %}
-            <li>
-                <button type="button" id="theme-toggle" aria-label="Toggle dark mode">🌓</button>
-            </li>
-        </ul>
-    </nav>
-</header>
+<body class="framed">
+{# No header bar -- navigation is the same "Menu" dropdown as the landing
+   page, floating top-right (see partials/_menu.twig). show_home adds a link
+   back to the landing. #}
+{% include 'partials/_menu.twig' with { show_home: true } %}
 <div class="content-container">
 <main>
     {% for message in flash_messages %}
