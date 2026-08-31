@@ -3,6 +3,14 @@
   site-header nav (that space is the hero instead), the hero + card grid
   fill the viewport edge to edge, and the only navigation is the "Menu"
   dropdown top-right. Every other page keeps layout.twig and its header.
+
+  Card / menu visibility:
+   - Recipes, Writers: always.
+   - Grimoire: only when logged in (it's a User-tier feature).
+   - Admin: only for a logged-in admin.
+   - Login (guest) becomes Logout (logged in). Logout is a POST + CSRF, so
+     that card/menu-item is a <form> whose <button> is styled to look
+     identical to the plain <a> cards/links (form is display:contents).
 #}
 <!doctype html>
 <html lang="en">
@@ -11,14 +19,6 @@
     <meta name="viewport" content="width=device-width, initial-scale=1">
     <title>fantasy.recipes</title>
     <link rel="stylesheet" href="/css/site.css?v={{ asset_version }}">
-    {#
-      Pixel headline face. TODO: self-host as a woff2 under public/fonts/ to
-      honour the "no web fonts / CDN" constraint (architecture.md -- Stack
-      Overview); served from Google Fonts for now.
-    #}
-    <link rel="preconnect" href="https://fonts.googleapis.com">
-    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
-    <link href="https://fonts.googleapis.com/css2?family=Silkscreen:wght@400;700&display=swap" rel="stylesheet">
 </head>
 <body class="landing">
     <header class="landing-hero">
@@ -29,11 +29,20 @@
             <div class="landing-menu-panel">
                 <a href="/recipes">Recipes</a>
                 <a href="/writers">Writers</a>
-                <a href="/grimoire">Grimoire</a>
+                {% if current_user %}
+                    <a href="/grimoire">Grimoire</a>
+                {% endif %}
                 {% if current_user and current_user.role == 'admin' %}
                     <a href="/admin">Admin</a>
                 {% endif %}
-                <a href="/login">Login</a>
+                {% if current_user %}
+                    <form class="landing-menu-logout" method="post" action="/logout">
+                        {% include 'partials/_csrf.twig' %}
+                        <button type="submit">Logout</button>
+                    </form>
+                {% else %}
+                    <a href="/login">Login</a>
+                {% endif %}
                 <div class="landing-menu-theme" role="group" aria-label="Theme">
                     <button type="button" data-set-theme="light">Light</button>
                     <button type="button" data-set-theme="dark">Dark</button>
@@ -51,20 +60,32 @@
             <span class="landing-card-art landing-art-writers" aria-hidden="true">✒️</span>
             <span class="landing-card-name">Writers</span>
         </a>
+        {% if current_user %}
         <a class="landing-card" href="/grimoire">
             <span class="landing-card-art landing-art-grimoire" aria-hidden="true">📖</span>
             <span class="landing-card-name">Grimoire</span>
         </a>
+        {% endif %}
         {% if current_user and current_user.role == 'admin' %}
         <a class="landing-card" href="/admin">
             <span class="landing-card-art landing-art-admin" aria-hidden="true">⚙️</span>
             <span class="landing-card-name">Admin</span>
         </a>
         {% endif %}
+        {% if current_user %}
+        <form class="landing-card-form" method="post" action="/logout">
+            {% include 'partials/_csrf.twig' %}
+            <button type="submit" class="landing-card">
+                <span class="landing-card-art landing-art-login" aria-hidden="true">🚪</span>
+                <span class="landing-card-name">Logout</span>
+            </button>
+        </form>
+        {% else %}
         <a class="landing-card" href="/login">
             <span class="landing-card-art landing-art-login" aria-hidden="true">🔑</span>
             <span class="landing-card-name">Login</span>
         </a>
+        {% endif %}
     </main>
 
     <footer class="site-footer">

@@ -18,13 +18,36 @@
  * No web fonts / CDN (Pi target, offline-capable) -- serif system-font
  * stacks throughout, chosen for an old-book/carved-signage feel over the
  * default Georgia-everywhere placeholder.
+ *
+ * One exception to "system fonts only": Silkscreen (the pixel display face
+ * used for the landing wordmark and card labels -- templates/home.twig).
+ * Self-hosted as woff2 under public/fonts/ -- NOT a CDN link -- so the
+ * offline/Pi constraint still holds. Silkscreen is (c) Jason Kottke, SIL
+ * Open Font License 1.1; the files are the Latin subset from Google Fonts.
  */
+
+@font-face {
+    font-family: 'Silkscreen';
+    font-style: normal;
+    font-weight: 400;
+    font-display: swap;
+    src: url('/fonts/silkscreen-400.woff2') format('woff2');
+}
+
+@font-face {
+    font-family: 'Silkscreen';
+    font-style: normal;
+    font-weight: 700;
+    font-display: swap;
+    src: url('/fonts/silkscreen-700.woff2') format('woff2');
+}
 
 :root {
     color-scheme: light dark;
 
     --font-heading: 'Iowan Old Style', 'Palatino Linotype', Palatino, Optima, 'Book Antiqua', Georgia, serif;
     --font-body: Georgia, Cambria, 'Times New Roman', Times, serif;
+    --font-pixel: 'Silkscreen', 'Courier New', monospace;
 
     /* ---- Light: timber frame + parchment ---- */
     --bg: #e9dcc3;
@@ -994,7 +1017,7 @@ button.tag-picker-save[hidden] {
 
 .landing-hero h1 {
     margin: 0;
-    font-family: 'Silkscreen', 'Courier New', monospace;
+    font-family: var(--font-pixel);
     font-weight: 700;
     text-transform: uppercase;
     white-space: nowrap;
@@ -1011,7 +1034,7 @@ button.tag-picker-save[hidden] {
     top: 0.9rem;
     right: 1rem;
     z-index: 10;
-    font-family: 'Silkscreen', 'Courier New', monospace;
+    font-family: var(--font-pixel);
 }
 
 .landing-menu > summary {
@@ -1061,6 +1084,33 @@ button.tag-picker-save[hidden] {
 
 .landing-menu-panel a:hover,
 .landing-menu-panel a:focus-visible {
+    background: var(--accent);
+    color: var(--accent-text);
+    outline: none;
+}
+
+/* Logout menu item: a POST form (CSRF). display:contents so its <button>
+   sits in the panel's column exactly like the <a> items and matches them. */
+.landing-menu-logout {
+    display: contents;
+}
+
+.landing-menu-logout button {
+    font-family: inherit;
+    font-size: 0.72rem;
+    text-align: left;
+    text-transform: uppercase;
+    letter-spacing: 0.05em;
+    padding: 0.55rem 0.6rem;
+    border: 0;
+    border-radius: 5px;
+    cursor: pointer;
+    color: var(--panel-text);
+    background: transparent;
+}
+
+.landing-menu-logout button:hover,
+.landing-menu-logout button:focus-visible {
     background: var(--accent);
     color: var(--accent-text);
     outline: none;
@@ -1130,6 +1180,18 @@ button.tag-picker-save[hidden] {
     outline: none;
 }
 
+/* The Logout card is a POST form (CSRF), not a link. display:contents drops
+   the <form> from layout so its <button>.landing-card is the actual flex
+   card, visually identical to the <a> cards. */
+.landing-card-form {
+    display: contents;
+}
+
+button.landing-card {
+    font-family: inherit;
+    cursor: pointer;
+}
+
 /* Card "art" -- placeholder gradients + an emoji, one identity per card.
    TODO: swap for real illustration when it exists. */
 .landing-card-art {
@@ -1152,7 +1214,7 @@ button.tag-picker-save[hidden] {
 .landing-art-login    { background: radial-gradient(circle at 50% 35%, #d8b45a, #5b4412 75%); }
 
 .landing-card-name {
-    font-family: 'Silkscreen', 'Courier New', monospace;
+    font-family: var(--font-pixel);
     text-align: center;
     text-transform: uppercase;
     letter-spacing: 0.05em;
