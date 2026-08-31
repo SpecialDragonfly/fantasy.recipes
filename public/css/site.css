@@ -225,10 +225,31 @@ main {
 }
 
 /* Non-landing pages (layout.twig, <body class="framed">): the Menu dropdown
-   floats top-right over the page, so give the content a little more head
-   room than the menu button needs. */
+   floats top-right and the wordmark top-left, over the page, so give the
+   content a little more head room than they need. */
 .framed main {
     padding-top: 3.5rem;
+}
+
+/* Small wordmark, top-left, links home. Mirrors .landing-menu's placement
+   on the opposite corner; positioned against <body> (position:relative). */
+.site-logo {
+    position: absolute;
+    top: 1rem;
+    left: 1rem;
+    z-index: 30;
+    font-family: var(--font-pixel);
+    font-size: clamp(1rem, 1.2vw, 3.2rem);
+    text-transform: lowercase;
+    letter-spacing: 0.02em;
+    text-decoration: none;
+    color: var(--text);
+}
+
+.site-logo:hover,
+.site-logo:focus-visible {
+    color: var(--link);
+    outline: none;
 }
 
 /* ---- Panel: the clean, high-contrast surface actual copy lives on ---- */

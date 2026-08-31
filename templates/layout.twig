@@ -9,9 +9,10 @@
     {% block head_extra %}{% endblock %}
 </head>
 <body class="framed">
-{# No header bar -- navigation is the same "Menu" dropdown as the landing
-   page, floating top-right (see partials/_menu.twig). show_home adds a link
-   back to the landing. #}
+{# No header bar. Top-left: a small wordmark linking home (the landing has
+   its own hero wordmark, so this is layout.twig only). Top-right: the same
+   "Menu" dropdown as the landing (partials/_menu.twig). #}
+<a class="site-logo" href="/">fantasy.recipes</a>
 {% include 'partials/_menu.twig' with { show_home: true } %}
 <div class="content-container">
 <main>
