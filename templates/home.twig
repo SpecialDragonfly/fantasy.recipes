@@ -4,13 +4,17 @@
   fill the viewport edge to edge, and the only navigation is the "Menu"
   dropdown top-right. Every other page keeps layout.twig and its header.
 
+  Every card is <div class="landing-card"> (the frame) wrapping the thing
+  that actually navigates: an <a href> for the plain cards, a
+  <form method="post" action="/logout"><button> for Logout. The <div> takes
+  the flex-item stretch; the inner <a>/<button> just fills it and stacks
+  the art + label. Same shape either way.
+
   Card / menu visibility:
    - Recipes, Writers: always.
    - Grimoire: only when logged in (it's a User-tier feature).
    - Admin: only for a logged-in admin.
-   - Login (guest) becomes Logout (logged in). Logout is a POST + CSRF, so
-     that card/menu-item is a <form> whose <button> is styled to look
-     identical to the plain <a> cards/links (form is display:contents).
+   - Login (guest) <-> Logout (logged in).
 #}
 <!doctype html>
 <html lang="en">
@@ -52,41 +56,51 @@
     </header>
 
     <main class="landing-cards">
-        <a class="landing-card" href="/recipes">
-            <span class="landing-card-art landing-art-recipes" aria-hidden="true">🍲</span>
-            <span class="landing-card-name">Recipes</span>
-        </a>
-        <a class="landing-card" href="/writers">
-            <span class="landing-card-art landing-art-writers" aria-hidden="true">✒️</span>
-            <span class="landing-card-name">Writers</span>
-        </a>
+        <div class="landing-card">
+            <a class="landing-card-body" href="/recipes">
+                <span class="landing-card-art landing-art-recipes" aria-hidden="true">🍲</span>
+                <span class="landing-card-name">Recipes</span>
+            </a>
+        </div>
+        <div class="landing-card">
+            <a class="landing-card-body" href="/writers">
+                <span class="landing-card-art landing-art-writers" aria-hidden="true">✒️</span>
+                <span class="landing-card-name">Writers</span>
+            </a>
+        </div>
         {% if current_user %}
-        <a class="landing-card" href="/grimoire">
-            <span class="landing-card-art landing-art-grimoire" aria-hidden="true">📖</span>
-            <span class="landing-card-name">Grimoire</span>
-        </a>
+        <div class="landing-card">
+            <a class="landing-card-body" href="/grimoire">
+                <span class="landing-card-art landing-art-grimoire" aria-hidden="true">📖</span>
+                <span class="landing-card-name">Grimoire</span>
+            </a>
+        </div>
         {% endif %}
         {% if current_user and current_user.role == 'admin' %}
-        <a class="landing-card" href="/admin">
-            <span class="landing-card-art landing-art-admin" aria-hidden="true">⚙️</span>
-            <span class="landing-card-name">Admin</span>
-        </a>
+        <div class="landing-card">
+            <a class="landing-card-body" href="/admin">
+                <span class="landing-card-art landing-art-admin" aria-hidden="true">⚙️</span>
+                <span class="landing-card-name">Admin</span>
+            </a>
+        </div>
         {% endif %}
         {% if current_user %}
-        {# The <form> itself is the card (forms flex reliably; <button>
-           doesn't). The submit button is an invisible full-bleed overlay,
-           so the markup that shows is the same spans as the <a> cards. #}
-        <form class="landing-card landing-card-logout" method="post" action="/logout">
-            {% include 'partials/_csrf.twig' %}
-            <span class="landing-card-art landing-art-login" aria-hidden="true">🚪</span>
-            <span class="landing-card-name">Logout</span>
-            <button type="submit" class="landing-card-submit">Logout</button>
-        </form>
+        <div class="landing-card">
+            <form class="landing-card-body" method="post" action="/logout">
+                {% include 'partials/_csrf.twig' %}
+                <button class="landing-card-body" type="submit">
+                    <span class="landing-card-art landing-art-login" aria-hidden="true">🚪</span>
+                    <span class="landing-card-name">Logout</span>
+                </button>
+            </form>
+        </div>
         {% else %}
-        <a class="landing-card" href="/login">
-            <span class="landing-card-art landing-art-login" aria-hidden="true">🔑</span>
-            <span class="landing-card-name">Login</span>
-        </a>
+        <div class="landing-card">
+            <a class="landing-card-body" href="/login">
+                <span class="landing-card-art landing-art-login" aria-hidden="true">🔑</span>
+                <span class="landing-card-name">Login</span>
+            </a>
+        </div>
         {% endif %}
     </main>
 

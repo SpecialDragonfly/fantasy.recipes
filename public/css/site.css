@@ -1157,58 +1157,52 @@ button.tag-picker-save[hidden] {
 
 /* Quick-reference "cards" -- image + one word, nothing else (the brief's
    Magic-the-Gathering-card reference). The textured frame is deliberate
-   here (decorative surround, not body copy), same as .site-header/.footer. */
+   here (decorative surround, not body copy), same as .site-header/.footer.
+
+   .landing-card is just the frame: a <div> that takes the flex-item
+   stretch cleanly (a <button> in that slot does not, across browsers).
+   Inside it, .landing-card-body -- an <a>, or a <form> wrapping a
+   <button> for the POST-only Logout -- fills the frame and stacks the
+   art + label. Same rule for all three so Login and Logout are identical
+   bar the wrapper element. */
 .landing-card {
     flex: 1 1 0;
     max-width: 300px;
     min-width: 0;
     display: flex;
-    flex-direction: column;
     padding: 10px;
     border: 2px solid var(--frame-border);
     border-radius: 16px;
     background: var(--frame-texture);
     box-shadow: var(--panel-shadow);
-    text-decoration: none;
-    color: var(--frame-text);
     transition: transform 0.13s ease, box-shadow 0.13s ease;
 }
 
 .landing-card:hover,
-.landing-card:focus-visible {
+.landing-card:focus-within {
     transform: translateY(-8px);
     box-shadow: var(--panel-shadow), 0 14px 28px rgba(0, 0, 0, 0.35);
-    outline: none;
 }
 
-/* The Logout card is a POST form (CSRF). The <form> is the card itself --
-   same .landing-card flex box, same child spans as the <a> cards -- and the
-   submit control is an invisible button stretched over the whole thing.
-   (<button> is not reliable as a flex container across browsers, so it
-   can't wear .landing-card directly.) */
-.landing-card-logout {
-    position: relative;
-    margin: 0;
-}
-
-.landing-card-submit {
-    position: absolute;
-    inset: 0;
-    width: 100%;
-    height: 100%;
-    margin: 0;
-    padding: 0;
-    border: 0;
-    background: transparent;
-    color: transparent;
+.landing-card-body {
+    flex: 1;
+    min-width: 0;
+    display: flex;
+    flex-direction: column;
     font: inherit;
+    text-align: inherit;
+    text-decoration: none;
+    color: var(--frame-text);
+    background: transparent;
+    border: 0;
+    padding: 0;
     cursor: pointer;
 }
 
-.landing-card-submit:focus-visible {
+.landing-card-body:focus-visible {
     outline: 2px solid var(--accent);
-    outline-offset: 3px;
-    border-radius: 16px;
+    outline-offset: 4px;
+    border-radius: 12px;
 }
 
 /* Card "art" -- placeholder gradients + an emoji, one identity per card.
