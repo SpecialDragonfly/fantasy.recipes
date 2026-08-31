@@ -177,6 +177,9 @@ body {
     display: flex;
     flex-direction: column;
     min-height: 100vh;
+    /* Floor the layout at 286px -- narrower viewports get a horizontal
+       scrollbar rather than the cards/hero/menu cramming further. */
+    min-width: 286px;
     /* containing block for the position:absolute .landing-menu when it's a
        direct child of <body> (layout.twig -- the landing nests it in the
        position:relative .landing-hero instead). */
