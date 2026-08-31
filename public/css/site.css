@@ -1286,3 +1286,35 @@ button.tag-picker-save[hidden] {
         min-height: 22vh;
     }
 }
+
+/* ---- Admin: recipe-email queue (templates/admin/mail_queue.twig) ---- */
+.queue-table {
+    width: 100%;
+    border-collapse: collapse;
+    margin-top: 1rem;
+    font-size: 0.9rem;
+}
+
+.queue-table th,
+.queue-table td {
+    border: 1px solid var(--panel-border);
+    padding: 0.5rem 0.6rem;
+    text-align: left;
+    vertical-align: top;
+}
+
+.queue-recipes {
+    margin: 0.3rem 0 0;
+    padding-left: 1.1rem;
+    font-weight: normal;
+}
+
+.queue-error {
+    color: var(--error);
+    word-break: break-word;
+}
+
+.queue-actions form {
+    display: block;
+    margin: 0.1rem 0;
+}

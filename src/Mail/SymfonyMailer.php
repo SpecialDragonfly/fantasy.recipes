@@ -41,13 +41,17 @@ final class SymfonyMailer implements Mailer
         );
     }
 
-    public function send(string $toAddress, string $subject, string $textBody): void
+    public function send(string $toAddress, string $subject, string $textBody, array $headers = []): void
     {
         $email = (new Email())
             ->from($this->from)
             ->to($toAddress)
             ->subject($subject)
             ->text($textBody);
+
+        foreach ($headers as $name => $value) {
+            $email->getHeaders()->addTextHeader($name, $value);
+        }
 
         $this->mailer->send($email);
     }

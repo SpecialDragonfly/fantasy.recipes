@@ -1,0 +1,81 @@
+{% extends 'layout.twig' %}
+
+{% block title %}Admin: Recipe-email queue - fantasy.recipes{% endblock %}
+
+{% block content %}
+    <section class="panel">
+        <h1>Recipe-email queue</h1>
+
+        <p>
+            {{ awaiting }} published recipe{{ awaiting == 1 ? '' : 's' }} waiting to be announced.
+        </p>
+        <form method="post" action="/admin/mail-queue/check" class="inline-form">
+            {% include 'partials/_csrf.twig' %}
+            <button type="submit">Check for new recipes now</button>
+        </form>
+
+        {% if campaigns|length %}
+            <table class="queue-table">
+                <thead>
+                    <tr>
+                        <th>#</th>
+                        <th>Kind</th>
+                        <th>Subject / recipes</th>
+                        <th>Recipients</th>
+                        <th>Status</th>
+                        <th>Scheduled</th>
+                        <th>Actions</th>
+                    </tr>
+                </thead>
+                <tbody>
+                    {% for c in campaigns %}
+                        <tr>
+                            <td>{{ c.id }}</td>
+                            <td>{{ c.kind }}</td>
+                            <td>
+                                <strong>{{ c.subject }}</strong>
+                                <ul class="queue-recipes">
+                                    {% for title in c.recipe_titles %}<li>{{ title }}</li>{% endfor %}
+                                </ul>
+                            </td>
+                            <td>
+                                {{ c.delivery_counts.sent }}/{{ c.recipients_total }} sent
+                                {%- if c.delivery_counts.failed %}, {{ c.delivery_counts.failed }} failed{% endif %}
+                            </td>
+                            <td>
+                                {{ c.status }}
+                                {% if c.last_error %}<br><small class="queue-error">{{ c.last_error }}</small>{% endif %}
+                            </td>
+                            <td>{{ c.scheduled_for }}</td>
+                            <td class="queue-actions">
+                                {% if c.status in ['pending'] %}
+                                    <form method="post" action="/admin/mail-queue/{{ c.id }}/send" class="inline-form">
+                                        {% include 'partials/_csrf.twig' %}
+                                        <button type="submit" class="link-button">Send now</button>
+                                    </form>
+                                    <form method="post" action="/admin/mail-queue/{{ c.id }}/cancel" class="inline-form">
+                                        {% include 'partials/_csrf.twig' %}
+                                        <button type="submit" class="link-button">Cancel</button>
+                                    </form>
+                                {% elseif c.status == 'failed' %}
+                                    <form method="post" action="/admin/mail-queue/{{ c.id }}/retry" class="inline-form">
+                                        {% include 'partials/_csrf.twig' %}
+                                        <button type="submit" class="link-button">Retry</button>
+                                    </form>
+                                    <form method="post" action="/admin/mail-queue/{{ c.id }}/cancel" class="inline-form">
+                                        {% include 'partials/_csrf.twig' %}
+                                        <button type="submit" class="link-button">Cancel</button>
+                                    </form>
+                                {% else %}
+                                    -
+                                {% endif %}
+                            </td>
+                        </tr>
+                    {% endfor %}
+                </tbody>
+            </table>
+        {% else %}
+            <p>No campaigns queued yet.</p>
+        {% endif %}
+    </section>
+{% endblock %}

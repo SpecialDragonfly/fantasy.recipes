@@ -18,7 +18,7 @@ use PDO;
  * to it. See db/migrations/20260816120300_create_recipes_table.php for the
  * full column-by-column rationale.
  *
- * @phpstan-type RecipeRow array{id: int, slug: string, title: string, origin: string|null, original_ingredients: string, original_instructions: string, narrator: string|null, narrator_recipe: string|null, story_id: int|null, status: string, created_at: string, updated_at: string}
+ * @phpstan-type RecipeRow array{id: int, slug: string, title: string, origin: string|null, original_ingredients: string, original_instructions: string, narrator: string|null, narrator_recipe: string|null, story_id: int|null, status: string, created_at: string, updated_at: string, notified_at: string|null}
  */
 final class RecipeRepository
 {
@@ -259,6 +259,60 @@ final class RecipeRepository
 
         /** @var list<RecipeRow> */
         return $statement->fetchAll();
+    }
+
+    /**
+     * Published recipes that haven't been announced by a marketing email
+     * yet (notified_at IS NULL). Oldest first -- if several are waiting,
+     * they're announced together as one digest in publish order. See
+     * db/migrations/20260831150000_create_recipe_email_queue.php.
+     *
+     * @return list<RecipeRow>
+     */
+    public function listPublishedAwaitingAnnouncement(): array
+    {
+        $statement = $this->pdo->prepare(
+            "SELECT * FROM recipes WHERE status = 'published' AND notified_at IS NULL ORDER BY created_at ASC, id ASC",
+        );
+        $statement->execute();
+
+        /** @var list<RecipeRow> */
+        return $statement->fetchAll();
+    }
+
+    /**
+     * @param list<int> $ids
+     */
+    public function markAnnounced(array $ids, string $when): void
+    {
+        $this->setNotifiedAt($ids, $when);
+    }
+
+    /**
+     * Undo markAnnounced() -- used when a queued campaign is cancelled, so
+     * a later sweep picks these recipes up again.
+     *
+     * @param list<int> $ids
+     */
+    public function clearAnnounced(array $ids): void
+    {
+        $this->setNotifiedAt($ids, null);
+    }
+
+    /**
+     * @param list<int> $ids
+     */
+    private function setNotifiedAt(array $ids, ?string $when): void
+    {
+        if ($ids === []) {
+            return;
+        }
+
+        $placeholders = implode(', ', array_fill(0, count($ids), '?'));
+        $statement = $this->pdo->prepare(
+            "UPDATE recipes SET notified_at = ? WHERE id IN ($placeholders)",
+        );
+        $statement->execute([$when, ...$ids]);
     }
 
     public function countPublished(): int

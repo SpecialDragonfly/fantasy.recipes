@@ -1,0 +1,12 @@
+{% autoescape false %}
+{{ recipes|length }} new recipes have been added to Fantasy Recipes.
+
+{% for r in recipes %}
+- {{ r.title }}
+  {{ site_url }}/recipes/{{ r.slug }}
+{% endfor %}
+--
+You're getting this because you asked to hear about new recipes on
+{{ site_url }}. To stop, open this link:
+{{ unsubscribe_url }}
+{% endautoescape %}

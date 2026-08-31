@@ -18,17 +18,23 @@ final class LogMailer implements Mailer
     {
     }
 
-    public function send(string $toAddress, string $subject, string $textBody): void
+    public function send(string $toAddress, string $subject, string $textBody, array $headers = []): void
     {
         if (!is_dir($this->logDir)) {
             mkdir($this->logDir, 0775, true);
         }
 
+        $headerLines = '';
+        foreach ($headers as $name => $value) {
+            $headerLines .= sprintf("%s: %s\n", $name, $value);
+        }
+
         $line = sprintf(
-            "[%s] To: %s | Subject: %s\n%s\n\n",
+            "[%s] To: %s | Subject: %s\n%s%s\n\n",
             date('Y-m-d H:i:s'),
             $toAddress,
             $subject,
+            $headerLines,
             $textBody,
         );
 

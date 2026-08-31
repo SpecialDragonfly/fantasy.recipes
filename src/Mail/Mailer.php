@@ -13,5 +13,10 @@ namespace App\Mail;
  */
 interface Mailer
 {
-    public function send(string $toAddress, string $subject, string $textBody): void;
+    /**
+     * @param array<string, string> $headers extra headers, e.g.
+     *     List-Unsubscribe on the marketing emails (RFC 8058). Ignored by
+     *     transports that can't carry them.
+     */
+    public function send(string $toAddress, string $subject, string $textBody, array $headers = []): void;
 }

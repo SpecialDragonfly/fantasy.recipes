@@ -27,6 +27,16 @@ final class CsrfMiddleware implements MiddlewareInterface
 
     public function process(Request $request, Handler $handler): Response
     {
+        // RFC 8058 one-click unsubscribe: a POST to /unsubscribe comes from
+        // the recipient's mail provider (Gmail etc.), triggered by the
+        // List-Unsubscribe-Post header -- there is no session and no CSRF
+        // token to present. Exempt exactly that one path+method; the
+        // /unsubscribe GET link and the /unsubscribe/resubscribe form (a
+        // real page on our site) still go through the Guard.
+        if ($request->getMethod() === 'POST' && $request->getUri()->getPath() === '/unsubscribe') {
+            return $handler->handle($request);
+        }
+
         $guard = new Guard($this->responseFactory);
 
         return $guard->process($request, $handler);

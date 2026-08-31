@@ -6,7 +6,9 @@ use App\Auth\Roles;
 use App\Auth\SessionAuth;
 use App\Http\Flash;
 use App\Http\Middleware\RequireRoleMiddleware;
+use App\Mail\RecipeNotifications;
 use App\Recipe\Narrators;
+use App\Repository\RecipeEmailQueueRepository;
 use App\Repository\RecipeRepository;
 use App\Repository\StoryRepository;
 use App\Repository\TagRepository;
@@ -632,6 +634,96 @@ return function (App $app): void {
                 Flash::add('info', 'Tag deleted.');
 
                 return $response->withHeader('Location', '/admin/tags')->withStatus(302);
+            },
+        );
+
+        // --- Recipe-email queue -----------------------------------------
+        //
+        // Visibility of, and control over, the "new recipe(s)" marketing
+        // emails (see App\Mail\RecipeNotifications and
+        // db/migrations/20260831150000_create_recipe_email_queue.php).
+
+        $group->get('/mail-queue', function (Request $request, Response $response) use ($container): Response {
+            /** @var RecipeEmailQueueRepository $queue */
+            $queue = $container->get(RecipeEmailQueueRepository::class);
+            $campaigns = $queue->listCampaigns();
+
+            $ids = array_map(static fn (array $c): int => (int) $c['id'], $campaigns);
+            $titles = $queue->recipeTitlesFor($ids);
+
+            $rows = [];
+            foreach ($campaigns as $campaign) {
+                $rows[] = $campaign + [
+                    'recipe_titles' => $titles[(int) $campaign['id']] ?? [],
+                    'delivery_counts' => $queue->deliveryStatusCounts((int) $campaign['id']),
+                ];
+            }
+
+            return Twig::fromRequest($request)->render($response, 'admin/mail_queue.twig', [
+                'campaigns' => $rows,
+                'awaiting' => count($container->get(RecipeRepository::class)->listPublishedAwaitingAnnouncement()),
+            ]);
+        });
+
+        $group->post('/mail-queue/check', function (Request $request, Response $response) use ($container): Response {
+            /** @var RecipeNotifications $notifications */
+            $notifications = $container->get(RecipeNotifications::class);
+            $id = $notifications->enqueuePending();
+
+            Flash::add($id === null ? 'info' : 'success', $id === null
+                ? 'Nothing new to announce.'
+                : sprintf('Queued campaign #%d.', $id));
+
+            return $response->withHeader('Location', '/admin/mail-queue')->withStatus(302);
+        });
+
+        $group->post(
+            '/mail-queue/{id}/send',
+            function (Request $request, Response $response, array $args) use ($container): Response {
+                /** @var RecipeNotifications $notifications */
+                $notifications = $container->get(RecipeNotifications::class);
+                $result = $notifications->sendCampaign((int) $args['id']);
+
+                Flash::add($result['stopped'] ? 'error' : 'success', sprintf(
+                    '%d sent, %d failed%s.',
+                    $result['sent'],
+                    $result['failed'],
+                    $result['stopped'] ? ' -- campaign paused, retry to resume' : '',
+                ));
+
+                return $response->withHeader('Location', '/admin/mail-queue')->withStatus(302);
+            },
+        );
+
+        $group->post(
+            '/mail-queue/{id}/retry',
+            function (Request $request, Response $response, array $args) use ($container): Response {
+                /** @var RecipeNotifications $notifications */
+                $notifications = $container->get(RecipeNotifications::class);
+                $result = $notifications->retryCampaign((int) $args['id']);
+
+                Flash::add($result['stopped'] ? 'error' : 'success', sprintf(
+                    'Retry: %d sent, %d failed.',
+                    $result['sent'],
+                    $result['failed'],
+                ));
+
+                return $response->withHeader('Location', '/admin/mail-queue')->withStatus(302);
+            },
+        );
+
+        $group->post(
+            '/mail-queue/{id}/cancel',
+            function (Request $request, Response $response, array $args) use ($container): Response {
+                /** @var RecipeNotifications $notifications */
+                $notifications = $container->get(RecipeNotifications::class);
+                $cancelled = $notifications->cancelCampaign((int) $args['id']);
+
+                Flash::add($cancelled ? 'info' : 'error', $cancelled
+                    ? 'Campaign cancelled. Its recipes will be re-announced on the next check.'
+                    : 'Too late -- that campaign has already sent or is sending.');
+
+                return $response->withHeader('Location', '/admin/mail-queue')->withStatus(302);
             },
         );
     })->add(new RequireRoleMiddleware(Roles::ADMIN, $container->get(UserRepository::class)));

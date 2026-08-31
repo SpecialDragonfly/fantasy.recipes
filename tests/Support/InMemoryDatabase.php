@@ -97,6 +97,7 @@ final class InMemoryDatabase
                 status VARCHAR(16) NOT NULL DEFAULT \'draft\',
                 created_at DATETIME NOT NULL,
                 updated_at DATETIME NOT NULL,
+                notified_at DATETIME NULL,
                 UNIQUE (slug)
             )',
         );
@@ -152,6 +153,49 @@ final class InMemoryDatabase
             )',
         );
         $pdo->exec('CREATE INDEX idx_personal_recipes_user_id ON personal_recipes(user_id)');
+
+        // See db/migrations/20260831150000_create_recipe_email_queue.php.
+        $pdo->exec(
+            'CREATE TABLE recipe_email_queue (
+                id INTEGER PRIMARY KEY AUTOINCREMENT,
+                kind VARCHAR(16) NOT NULL,
+                subject VARCHAR(255) NOT NULL,
+                status VARCHAR(16) NOT NULL DEFAULT \'pending\',
+                scheduled_for DATETIME NOT NULL,
+                recipients_total INTEGER NOT NULL DEFAULT 0,
+                recipients_sent INTEGER NOT NULL DEFAULT 0,
+                last_error TEXT NULL,
+                created_at DATETIME NOT NULL,
+                sent_at DATETIME NULL
+            )',
+        );
+        $pdo->exec('CREATE INDEX idx_req_status_sched ON recipe_email_queue(status, scheduled_for)');
+
+        $pdo->exec(
+            'CREATE TABLE recipe_email_queue_recipes (
+                queue_id INTEGER NOT NULL,
+                recipe_id INTEGER NOT NULL,
+                PRIMARY KEY (queue_id, recipe_id),
+                FOREIGN KEY (queue_id) REFERENCES recipe_email_queue(id) ON DELETE CASCADE,
+                FOREIGN KEY (recipe_id) REFERENCES recipes(id) ON DELETE CASCADE
+            )',
+        );
+
+        $pdo->exec(
+            'CREATE TABLE recipe_email_queue_deliveries (
+                id INTEGER PRIMARY KEY AUTOINCREMENT,
+                queue_id INTEGER NOT NULL,
+                user_id INTEGER NOT NULL,
+                recipient_email VARCHAR(255) NOT NULL,
+                status VARCHAR(16) NOT NULL DEFAULT \'pending\',
+                error TEXT NULL,
+                sent_at DATETIME NULL,
+                UNIQUE (queue_id, user_id),
+                FOREIGN KEY (queue_id) REFERENCES recipe_email_queue(id) ON DELETE CASCADE,
+                FOREIGN KEY (user_id) REFERENCES users(id) ON DELETE CASCADE
+            )',
+        );
+        $pdo->exec('CREATE INDEX idx_reqd_queue_status ON recipe_email_queue_deliveries(queue_id, status)');
 
         return $pdo;
     }

@@ -9,6 +9,7 @@ use App\Repository\GrimoireRepository;
 use App\Repository\RecipeRepository;
 use App\Repository\StoryRepository;
 use App\Repository\TagRepository;
+use App\Repository\UserRepository;
 use App\Search\RecipeSearch;
 use Psr\Http\Message\ResponseInterface as Response;
 use Psr\Http\Message\ServerRequestInterface as Request;
@@ -178,6 +179,57 @@ return function (App $app): void {
         return Twig::fromRequest($request)->render($response, $template, [
             'contact_email' => 'licensing@fantasyrecipes.co.uk',
             'fee_gbp' => 5,
+        ]);
+    });
+
+    // Marketing-email unsubscribe. No login: identified by the per-user
+    // `unsubscribe_token` in the `?u=` param (the link at the foot of every
+    // "new recipe" email). An unknown/blank token renders the same
+    // confirmation page with a neutral "not recognised" message rather than
+    // an error, so the link can't be used to probe which tokens are valid.
+    $unsubscribeByToken = static function (string $token, bool $optIn) use ($container): ?array {
+        /** @var UserRepository $users */
+        $users = $container->get(UserRepository::class);
+        $user = $token !== '' ? $users->findByUnsubscribeToken($token) : null;
+
+        if ($user !== null) {
+            $users->setMarketingOptIn((int) $user['id'], $optIn);
+        }
+
+        return $user;
+    };
+
+    $app->get('/unsubscribe', function (Request $request, Response $response) use ($unsubscribeByToken): Response {
+        $token = trim((string) ($request->getQueryParams()['u'] ?? ''));
+        $user = $unsubscribeByToken($token, false);
+
+        return Twig::fromRequest($request)->render($response, 'unsubscribe/done.twig', [
+            'recognised' => $user !== null,
+            'token' => $user !== null ? $token : null,
+        ]);
+    });
+
+    // RFC 8058 one-click (List-Unsubscribe-Post) -- a POST from the mail
+    // provider, no CSRF token (exempted in CsrfMiddleware). Body is
+    // ignored; the token is in `?u=`.
+    $app->post('/unsubscribe', function (Request $request, Response $response) use ($unsubscribeByToken): Response {
+        $unsubscribeByToken(trim((string) ($request->getQueryParams()['u'] ?? '')), false);
+
+        return $response->withStatus(200);
+    });
+
+    // "Re-subscribe" button on the confirmation page (a real form on our
+    // site -- CSRF-protected; token in the body).
+    $app->post('/unsubscribe/resubscribe', function (Request $request, Response $response) use ($unsubscribeByToken): Response {
+        /** @var array<string, string> $data */
+        $data = (array) $request->getParsedBody();
+        $token = trim((string) ($data['u'] ?? ''));
+        $user = $unsubscribeByToken($token, true);
+
+        return Twig::fromRequest($request)->render($response, 'unsubscribe/done.twig', [
+            'recognised' => $user !== null,
+            'token' => $user !== null ? $token : null,
+            'resubscribed' => $user !== null,
         ]);
     });
 };

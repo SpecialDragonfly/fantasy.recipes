@@ -155,6 +155,23 @@ $builder->addDefinitions([
             'debug' => $debug,
         ]);
     },
+
+    // The "new recipe(s)" email pipeline. Everything else it needs (repos,
+    // Mailer, Twig) autowires; the app URL is a plain string from settings,
+    // so it's assembled here.
+    App\Mail\RecipeNotifications::class => function (ContainerInterface $c): App\Mail\RecipeNotifications {
+        /** @var array{app_url: string} $settings */
+        $settings = $c->get('settings');
+
+        return new App\Mail\RecipeNotifications(
+            $c->get(App\Repository\RecipeRepository::class),
+            $c->get(App\Repository\UserRepository::class),
+            $c->get(App\Repository\RecipeEmailQueueRepository::class),
+            $c->get(App\Mail\Mailer::class),
+            $c->get(Twig::class),
+            $settings['app_url'],
+        );
+    },
 ]);
 
 return $builder->build();

@@ -1,0 +1,27 @@
+{% extends 'layout.twig' %}
+
+{% block title %}{{ resubscribed ? 'Subscribed' : 'Unsubscribed' }} - fantasy.recipes{% endblock %}
+
+{% block content %}
+    <section class="auth-form">
+        {% if resubscribed %}
+            <h1>You're subscribed</h1>
+            <p>We'll email you when a new recipe is published. You can stop
+            any time from the link in those emails, or from your account.</p>
+        {% elseif recognised %}
+            <h1>You've been unsubscribed</h1>
+            <p>You won't get any more "new recipe" emails from Fantasy Recipes.</p>
+
+            <form method="post" action="/unsubscribe/resubscribe">
+                {% include 'partials/_csrf.twig' %}
+                <input type="hidden" name="u" value="{{ token }}">
+                <button type="submit">Changed your mind? Re-subscribe</button>
+            </form>
+        {% else %}
+            <h1>Link not recognised</h1>
+            <p>That unsubscribe link isn't valid or has already been used.
+            If you have an account you can manage email preferences on your
+            <a href="/account">account page</a>.</p>
+        {% endif %}
+    </section>
+{% endblock %}

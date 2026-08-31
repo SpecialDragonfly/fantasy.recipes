@@ -62,6 +62,21 @@ final class UserRepository
     }
 
     /**
+     * Everyone currently opted in to the "new recipe" emails. Snapshotted
+     * into a campaign's delivery rows at enqueue time (see
+     * RecipeEmailQueueRepository::createCampaign).
+     *
+     * @return list<UserRow>
+     */
+    public function listMarketingOptedIn(): array
+    {
+        $statement = $this->pdo->query('SELECT * FROM users WHERE marketing_opt_in = 1 ORDER BY id ASC');
+
+        /** @var list<UserRow> */
+        return $statement === false ? [] : $statement->fetchAll();
+    }
+
+    /**
      * @return UserRow|null
      */
     public function findByUnsubscribeToken(string $token): ?array

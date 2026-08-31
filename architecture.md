@@ -136,6 +136,25 @@ being a second, disconnected toolchain.
 - **`recipe:normalize-temperatures`** — batch job rewriting every recipe's
   `OriginalInstructions`/`NarratorRecipe` temperature mentions to a
   consistent "Celsius (Fahrenheit)" order.
+- **`mail:enqueue-recipe-notifications`** — daily cron. Rolls every
+  published recipe with `notified_at IS NULL` into one queued campaign:
+  `single` for exactly one, `digest` for more (see the mail queue below).
+  Also the admin "Check now" button.
+- **`mail:send-queue`** — daily cron, shortly after the enqueue job. Sends
+  every campaign in `recipe_email_queue` whose `scheduled_for` has passed.
+  A delivery error stops the campaign (`status = failed`, `last_error` set);
+  the remaining deliveries stay `pending` so re-running, or the admin
+  "Retry" button, resumes from where it stopped. Also driven per-campaign
+  by the admin "Send now" / "Retry" buttons.
+
+**Recipe-email queue** (`db/migrations/20260831150000…`,
+`App\Mail\RecipeNotifications`, admin at `/admin/mail-queue`): a campaign
+row plus one `recipe_email_queue_deliveries` row per recipient (snapshotted
+at enqueue time). Purpose-built as a dead-letter queue -- provider rate
+limits leave failed/unsent deliveries visible and resumable. Every
+marketing email carries a `List-Unsubscribe` / `List-Unsubscribe-Post`
+header (RFC 8058) and a footer link to `/unsubscribe?u=<users.unsubscribe_token>`
+(no login).
 
 Batch commands are designed to be safely interruptible and re-runnable: each
 operates by selecting rows still "not yet done" for that command and writing
