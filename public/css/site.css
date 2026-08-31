@@ -1184,7 +1184,11 @@ button.tag-picker-save[hidden] {
     box-shadow: var(--panel-shadow), 0 14px 28px rgba(0, 0, 0, 0.35);
 }
 
-.landing-card-body {
+/* Descendant selector (not just .landing-card-body) so this outweighs the
+   global `button:not(.link-button)` rule -- otherwise the Logout <button>
+   picks up that rule's accent gradient, 999px pill and padding instead of
+   looking like the <a> cards. */
+.landing-card .landing-card-body {
     flex: 1;
     min-width: 0;
     display: flex;
@@ -1193,23 +1197,22 @@ button.tag-picker-save[hidden] {
     text-align: inherit;
     text-decoration: none;
     color: var(--frame-text);
-    /* Strip native <button> chrome on WebKit -- otherwise the Logout card's
-       button keeps a pill radius and its own content box, so it doesn't
-       match the <a> cards. */
-    -webkit-appearance: none;
-    appearance: none;
     background: transparent;
     border: 0;
-    border-radius: 0;
+    border-radius: 10px;
     margin: 0;
     padding: 0;
+    box-shadow: none;
     cursor: pointer;
 }
 
-.landing-card-body:focus-visible {
+.landing-card .landing-card-body:focus-visible {
     outline: 2px solid var(--accent);
     outline-offset: 4px;
-    border-radius: 12px;
+}
+
+.landing-card .landing-card-body:hover {
+    filter: none;
 }
 
 /* Card "art" -- placeholder gradients + an emoji, one identity per card.
