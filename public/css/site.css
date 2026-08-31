@@ -1193,8 +1193,15 @@ button.tag-picker-save[hidden] {
     text-align: inherit;
     text-decoration: none;
     color: var(--frame-text);
+    /* Strip native <button> chrome on WebKit -- otherwise the Logout card's
+       button keeps a pill radius and its own content box, so it doesn't
+       match the <a> cards. */
+    -webkit-appearance: none;
+    appearance: none;
     background: transparent;
     border: 0;
+    border-radius: 0;
+    margin: 0;
     padding: 0;
     cursor: pointer;
 }
