@@ -1240,6 +1240,46 @@ button.tag-picker-save[hidden] {
     border-color: var(--accent);
 }
 
+/* Impersonation notice: pinned to the top of the menu panel while an admin
+   is acting as another user. The <small> names who you're viewing as; the
+   POST form (CSRF) ends the session and returns to the admin account. */
+.landing-menu-impersonation {
+    display: flex;
+    flex-direction: column;
+    gap: 0.35rem;
+    margin-bottom: 0.35rem;
+    padding: 0.5rem 0.6rem;
+    border: 1px solid var(--accent);
+    border-radius: 5px;
+}
+
+.landing-menu-impersonation small {
+    font-size: 0.62rem;
+    text-transform: uppercase;
+    letter-spacing: 0.03em;
+    line-height: 1.4;
+}
+
+.landing-menu-impersonation button {
+    width: 100%;
+    font-family: inherit;
+    font-size: 0.68rem;
+    text-transform: uppercase;
+    letter-spacing: 0.05em;
+    padding: 0.45rem 0.6rem;
+    border: 0;
+    border-radius: 5px;
+    cursor: pointer;
+    color: var(--accent-text);
+    background: var(--accent);
+}
+
+.landing-menu-impersonation button:hover,
+.landing-menu-impersonation button:focus-visible {
+    filter: brightness(1.1);
+    outline: none;
+}
+
 /* Card row: fills the rest of the fold. */
 .landing-cards {
     flex: 1 1 auto;

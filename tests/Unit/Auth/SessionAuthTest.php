@@ -68,4 +68,74 @@ final class SessionAuthTest extends TestCase
         self::assertNull(SessionAuth::user());
         self::assertSame(Roles::GUEST, SessionAuth::role());
     }
+
+    public function testStartThenStopImpersonatingRoundTripsToTheOriginalAdmin(): void
+    {
+        $admin = ['id' => 1, 'username' => 'root', 'role' => Roles::ADMIN];
+        SessionAuth::login($admin);
+
+        SessionAuth::startImpersonating(['id' => 42, 'username' => 'alice', 'role' => Roles::USER]);
+
+        self::assertSame(['id' => 42, 'username' => 'alice', 'role' => Roles::USER], SessionAuth::user());
+        self::assertSame(42, SessionAuth::id());
+        self::assertSame(Roles::USER, SessionAuth::role());
+        self::assertFalse(SessionAuth::isAdmin());
+
+        SessionAuth::stopImpersonating();
+
+        self::assertSame($admin, SessionAuth::user());
+        self::assertSame(1, SessionAuth::id());
+        self::assertTrue(SessionAuth::isAdmin());
+    }
+
+    public function testIsImpersonatingIsTrueOnlyBetweenStartAndStop(): void
+    {
+        SessionAuth::login(['id' => 1, 'username' => 'root', 'role' => Roles::ADMIN]);
+        self::assertFalse(SessionAuth::isImpersonating());
+
+        SessionAuth::startImpersonating(['id' => 42, 'username' => 'alice', 'role' => Roles::USER]);
+        self::assertTrue(SessionAuth::isImpersonating());
+
+        SessionAuth::stopImpersonating();
+        self::assertFalse(SessionAuth::isImpersonating());
+    }
+
+    public function testImpersonatorReturnsTheOriginalAdminDuringImpersonationAndNullOtherwise(): void
+    {
+        $admin = ['id' => 1, 'username' => 'root', 'role' => Roles::ADMIN];
+        SessionAuth::login($admin);
+
+        self::assertNull(SessionAuth::impersonator());
+
+        SessionAuth::startImpersonating(['id' => 42, 'username' => 'alice', 'role' => Roles::USER]);
+        self::assertSame($admin, SessionAuth::impersonator());
+
+        SessionAuth::stopImpersonating();
+        self::assertNull(SessionAuth::impersonator());
+    }
+
+    public function testStopImpersonatingWhenNotImpersonatingIsAHarmlessNoOp(): void
+    {
+        $user = ['id' => 42, 'username' => 'alice', 'role' => Roles::USER];
+        SessionAuth::login($user);
+
+        SessionAuth::stopImpersonating();
+
+        self::assertSame($user, SessionAuth::user());
+        self::assertFalse(SessionAuth::isImpersonating());
+    }
+
+    public function testLogoutWhileImpersonatingClearsBothKeys(): void
+    {
+        SessionAuth::login(['id' => 1, 'username' => 'root', 'role' => Roles::ADMIN]);
+        SessionAuth::startImpersonating(['id' => 42, 'username' => 'alice', 'role' => Roles::USER]);
+
+        SessionAuth::logout();
+
+        self::assertFalse(SessionAuth::isLoggedIn());
+        self::assertFalse(SessionAuth::isImpersonating());
+        self::assertNull(SessionAuth::user());
+        self::assertNull(SessionAuth::impersonator());
+        self::assertArrayNotHasKey('impersonator', $_SESSION);
+    }
 }
