@@ -116,6 +116,15 @@ Three flat tiers, no moderator tier:
 Multi-admin editing conflicts (two admins picking up the same item at once)
 are an accepted, tolerable risk — no locking/reservation system.
 
+**Impersonation.** From `/admin/users` an admin can "view the site as"
+another user: their own session is stashed and replaced with the target
+user's, so they browse and act exactly as that user until they hit
+**Return to admin** (`POST /impersonate/stop`, surfaced in the menu while
+impersonating), which restores the original admin session. Impersonating
+another admin is disallowed — it grants no extra reach and only muddies the
+"who did this" trail — as is impersonating yourself. This is an admin
+convenience for support/debugging, not an audited access-control boundary.
+
 ---
 
 ## Content Pipeline (Building the Corpus)

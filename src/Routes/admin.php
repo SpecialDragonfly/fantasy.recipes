@@ -581,6 +581,49 @@ return function (App $app): void {
             },
         );
 
+        // Impersonation ("log in as another user"): swap the session to a
+        // real users-table row so every RequireRoleMiddleware check (which
+        // reads role straight off the session and re-validates the id
+        // against the DB) keeps working as that user. The matching stop
+        // route lives OUTSIDE this admin group -- see src/Routes/auth.php --
+        // because mid-impersonation the session role is 'user' and a stop
+        // route in here would 403. Impersonating another admin is refused:
+        // it grants no new reach and muddies the audit trail; promote/demote
+        // in the DB instead.
+        $group->post(
+            '/users/{id}/impersonate',
+            function (Request $request, Response $response, array $args) use ($container): Response {
+                $targetId = (int) $args['id'];
+
+                /** @var UserRepository $users */
+                $users = $container->get(UserRepository::class);
+                $target = $users->findById($targetId);
+
+                if ($target === null) {
+                    Flash::add('error', 'No such user.');
+
+                    return $response->withHeader('Location', '/admin/users')->withStatus(302);
+                }
+
+                if ($targetId === SessionAuth::id()) {
+                    Flash::add('error', 'You cannot impersonate yourself.');
+
+                    return $response->withHeader('Location', '/admin/users')->withStatus(302);
+                }
+
+                if ($target['role'] === Roles::ADMIN) {
+                    Flash::add('error', 'You cannot impersonate another admin.');
+
+                    return $response->withHeader('Location', '/admin/users')->withStatus(302);
+                }
+
+                SessionAuth::startImpersonating($target);
+                Flash::add('info', sprintf('You are now viewing the site as %s.', $target['username']));
+
+                return $response->withHeader('Location', '/')->withStatus(302);
+            },
+        );
+
         // --- Metrics ------------------------------------------------------
         //
         // First-party only -- nothing leaves the box. Daily login tally

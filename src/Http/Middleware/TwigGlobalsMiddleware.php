@@ -17,6 +17,9 @@ use Slim\Views\Twig;
  * slim/twig-view exposes the current request as `request`:
  *  - `current_user`: the logged-in user (or null), so the nav doesn't need
  *    every route handler to remember to pass it in.
+ *  - `impersonator`: while an admin is impersonating another user, the
+ *    stashed real admin record (else null) -- lets the menu show a "viewing
+ *    as ..." affordance with a "Return to admin" button.
  *  - `flash_messages`: one-shot messages queued by the previous request via
  *    App\Http\Flash, consumed (read + cleared) here.
  *  - `request`: the current request, so templates can read
@@ -34,6 +37,7 @@ final class TwigGlobalsMiddleware implements MiddlewareInterface
     {
         $environment = $this->twig->getEnvironment();
         $environment->addGlobal('current_user', SessionAuth::user());
+        $environment->addGlobal('impersonator', SessionAuth::impersonator());
         $environment->addGlobal('flash_messages', Flash::consume());
         $environment->addGlobal('request', $request);
         $environment->addGlobal('asset_version', self::assetVersion());

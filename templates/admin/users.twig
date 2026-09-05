@@ -32,6 +32,13 @@
                                 {% if user.id == current_user_id %}
                                     <small>you</small>
                                 {% else %}
+                                    {% if user.role != 'admin' %}
+                                        <form method="post" action="/admin/users/{{ user.id }}/impersonate" class="inline-form"
+                                              onsubmit="return confirm('View the site as {{ user.username|e('js') }}? You will act as this user until you return to your admin account.');">
+                                            {% include 'partials/_csrf.twig' %}
+                                            <button type="submit" class="link-button">Impersonate</button>
+                                        </form>
+                                    {% endif %}
                                     <form method="post" action="/admin/users/{{ user.id }}/delete" class="inline-form"
                                           onsubmit="return confirm('Delete {{ user.username|e('js') }}? This also removes their Grimoire and personal recipes and cannot be undone.');">
                                         {% include 'partials/_csrf.twig' %}

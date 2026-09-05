@@ -61,6 +61,18 @@ product decisions.
 - **Authorization:** Slim route groups + middleware reading role
   (guest/user/admin) off the session, matching the flat three-tier model in
   `spec.md`. No moderator tier, no per-resource ACLs.
+- **Admin impersonation:** an admin can "view the site as" a non-admin user
+  from `/admin/users`. `SessionAuth::startImpersonating()` stashes the real
+  admin record under `$_SESSION['impersonator']` and swaps `$_SESSION['user']`
+  to the target's real users-table row, so every downstream role check (and
+  `RequireRoleMiddleware`'s DB re-validation) sees a genuine `user`-level
+  session. The start route (`POST /admin/users/{id}/impersonate`) lives in the
+  admin group; the stop route (`POST /impersonate/stop`) is deliberately
+  **outside** it — the session role is `user` while impersonating, so the
+  admin group would 403 — and is guarded by `SessionAuth::isImpersonating()`.
+  `stopImpersonating()` restores the stashed admin; `logout()`'s
+  `$_SESSION = []` drops both keys together. Both start and stop regenerate
+  the session id (privilege change / fixation), then re-write the keys.
 - **Data layer:** no ORM. Thin PDO repository classes per aggregate
   (`RecipeRepository`, `StoryRepository`, `TagRepository`, etc.),
   prepared statements throughout, `PDO::ATTR_EMULATE_PREPARES = false`,

@@ -126,4 +126,20 @@ return function (App $app): void {
 
         return $response->withHeader('Location', '/')->withStatus(302);
     });
+
+    // End an admin impersonation session and return to the real admin
+    // account. Deliberately ungrouped and role-free: mid-impersonation the
+    // session role is 'user', so this cannot live in the admin group (it
+    // would 403). The isImpersonating() guard is the whole authorization
+    // check -- there is nothing to stop if the stash is absent.
+    $app->post('/impersonate/stop', function (Request $request, Response $response): Response {
+        if (!SessionAuth::isImpersonating()) {
+            return $response->withHeader('Location', '/')->withStatus(302);
+        }
+
+        SessionAuth::stopImpersonating();
+        Flash::add('info', 'Back to your admin account.');
+
+        return $response->withHeader('Location', '/admin/users')->withStatus(302);
+    });
 };
