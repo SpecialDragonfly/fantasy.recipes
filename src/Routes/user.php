@@ -2,6 +2,7 @@
 
 declare(strict_types=1);
 
+use App\Account\PasswordChangeValidator;
 use App\Auth\Roles;
 use App\Auth\SessionAuth;
 use App\Http\Flash;
@@ -78,6 +79,48 @@ return function (App $app): void {
             $users->setMarketingOptIn((int) SessionAuth::id(), isset($data['marketing_opt_in']));
 
             Flash::add('success', 'Your preferences have been saved.');
+
+            return $response->withHeader('Location', '/account')->withStatus(302);
+        });
+
+        // Self-service password change. Acts purely on the current session's
+        // user (SessionAuth::id()) -- there is no admin/impersonation special
+        // case here on purpose: whoever the session is currently
+        // authenticated as is whose password this changes. Errors flash and
+        // redirect back to /account (same style as POST /account above)
+        // rather than the 422 re-render pattern, to keep this one-page
+        // account area's two forms independent.
+        $group->post('/account/password', function (Request $request, Response $response) use ($container): Response {
+            /** @var array<string, mixed> $data */
+            $data = (array) $request->getParsedBody();
+
+            /** @var UserRepository $users */
+            $users = $container->get(UserRepository::class);
+            $user = $users->findById((int) SessionAuth::id());
+
+            if ($user === null) {
+                Flash::add('error', 'Your current password is incorrect.');
+
+                return $response->withHeader('Location', '/account')->withStatus(302);
+            }
+
+            $newPassword = (string) ($data['new_password'] ?? '');
+
+            $error = PasswordChangeValidator::firstError(
+                $users->verifyPassword($user, (string) ($data['current_password'] ?? '')),
+                $newPassword,
+                (string) ($data['new_password_confirm'] ?? ''),
+            );
+
+            if ($error !== null) {
+                Flash::add('error', $error);
+
+                return $response->withHeader('Location', '/account')->withStatus(302);
+            }
+
+            $users->updatePassword((int) SessionAuth::id(), $newPassword);
+
+            Flash::add('success', 'Your password has been changed.');
 
             return $response->withHeader('Location', '/account')->withStatus(302);
         });
