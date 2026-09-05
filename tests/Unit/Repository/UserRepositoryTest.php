@@ -150,6 +150,25 @@ final class UserRepositoryTest extends TestCase
         self::assertSame(['new', 'old'], $usernames);
     }
 
+    public function testAllRowsCarryMarketingOptInStateForTheAdminUsersPage(): void
+    {
+        $this->repository->create('optedin', 'optedin@example.com', 'password123', true);
+        $this->repository->create('optedout', 'optedout@example.com', 'password123', false);
+
+        $rows = [];
+        foreach ($this->repository->all() as $row) {
+            $rows[$row['username']] = $row;
+        }
+
+        self::assertArrayHasKey('marketing_opt_in', $rows['optedin']);
+        self::assertSame(1, (int) $rows['optedin']['marketing_opt_in']);
+        self::assertNotNull($rows['optedin']['marketing_opt_in_at']);
+
+        self::assertArrayHasKey('marketing_opt_in', $rows['optedout']);
+        self::assertSame(0, (int) $rows['optedout']['marketing_opt_in']);
+        self::assertNull($rows['optedout']['marketing_opt_in_at']);
+    }
+
     public function testTouchLastLoginStampsTheTimeOnlyForThatUser(): void
     {
         $a = $this->repository->create('a', 'a@example.com', 'password123');

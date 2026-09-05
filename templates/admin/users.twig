@@ -15,6 +15,7 @@
                         <th>Username</th>
                         <th>Email</th>
                         <th>Role</th>
+                        <th>Marketing</th>
                         <th>Signed up</th>
                         <th>Last login</th>
                         <th>Actions</th>
@@ -26,6 +27,7 @@
                             <td>{{ user.username }}</td>
                             <td>{{ user.email }}</td>
                             <td>{{ user.role }}</td>
+                            <td>{{ user.marketing_opt_in ? 'Yes' : 'No' }}{% if user.marketing_opt_in and user.marketing_opt_in_at %} <small>since {{ user.marketing_opt_in_at }}</small>{% endif %}</td>
                             <td>{{ user.created_at }}</td>
                             <td>{{ user.last_login_at ?? 'never' }}</td>
                             <td class="queue-actions">
