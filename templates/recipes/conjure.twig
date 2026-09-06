@@ -5,13 +5,15 @@
 {% block content %}
     <h1>Conjure a Recipe</h1>
 
-    <p>Every recipe is a ritual, and every ritual needs its reagents. List the
-    ones a dish <em>must</em> call for &mdash; those gate what you see &mdash;
-    and the ones it merely <em>can</em>, which pull the closest matches to the
-    top. One per line, or run them together with commas. Leave &ldquo;must
-    have&rdquo; empty to rank purely by what you have spare.</p>
+    <p>Every recipe is a ritual, and every ritual needs its reagents. Sort what
+    you have into two piles: the ones a dish <em>must</em> call for &mdash; those
+    gate what you see &mdash; and the ones it merely <em>can</em>, which pull the
+    closest matches to the top. Type a few into each box (one per line, or run
+    them together with commas); once they become pills you can drag any reagent
+    from one pile to the other. Leave &ldquo;must have&rdquo; empty to rank purely
+    by what you have spare.</p>
 
-    <form method="get" action="/conjure" class="recipe-filter-form recipe-search-form" role="search">
+    <form method="get" action="/conjure" class="recipe-filter-form recipe-search-form conjure-form" role="search">
         <label for="must">Must have</label>
         <input type="search" id="must" name="must" value="{{ must|default('') }}" placeholder="e.g. chicken" autofocus>
         <label for="can">Can have</label>

@@ -468,4 +468,279 @@
 
         renderPills();
     });
+
+    // ---- Conjure a Recipe: draggable reagent pills -----------------------
+    //
+    // Progressive enhancement over templates/recipes/conjure.twig's two
+    // plain <input name="must"> / <input name="can"> search fields. With JS
+    // off, the page is just those two comma/space-separated text boxes and
+    // the GET form submits exactly as before. With JS, each field is hidden
+    // and its tokens become "pills" sorted into a "Must have" and a "Can
+    // have" bucket; dragging a pill to the other bucket (or, for touch and
+    // keyboard, clicking it / pressing Enter on it) moves it, and every
+    // add / remove / move rewrites the hidden field that backs the bucket
+    // so the query string the form finally submits is unchanged. There is
+    // no AJAX here -- the buckets are purely a nicer way to fill in two
+    // strings that still get submitted by the plain GET form.
+    var conjureForm = document.querySelector('.conjure-form');
+    if (conjureForm) {
+        var mustInput = conjureForm.querySelector('#must');
+        var canInput = conjureForm.querySelector('#can');
+
+        if (mustInput && canInput) {
+            var LABELS = { must: 'Must have', can: 'Can have' };
+            var lists = {};
+            // The pill currently being dragged, shared between the pill's
+            // own dragstart/dragend and each bucket's dragover/drop. HTML5
+            // drag-and-drop can only carry strings in its dataTransfer, not
+            // a node reference, so we keep the element here instead.
+            var dragged = null;
+
+            function tokenize(value) {
+                return value.split(/[\s,]+/).filter(function (token) {
+                    return token !== '';
+                });
+            }
+
+            function other(key) {
+                return key === 'must' ? 'can' : 'must';
+            }
+
+            function bucketOf(pill) {
+                return pill.parentNode.getAttribute('data-bucket');
+            }
+
+            // Reagent names, in DOM order, from one bucket back into its
+            // backing <input> -- space-separated, which tokenize() and the
+            // server's own preg_split('/[\s,]+/') both accept.
+            function sync() {
+                ['must', 'can'].forEach(function (key) {
+                    var names = Array.prototype.map.call(
+                        lists[key].querySelectorAll('.reagent-pill'),
+                        function (pill) { return pill.getAttribute('data-reagent'); }
+                    );
+                    (key === 'must' ? mustInput : canInput).value = names.join(' ');
+                });
+            }
+
+            // Case-insensitive so "Chicken" dragged onto a bucket that
+            // already lists "chicken" is treated as a duplicate, not a
+            // second pill.
+            function has(key, name) {
+                return Array.prototype.some.call(
+                    lists[key].querySelectorAll('.reagent-pill'),
+                    function (pill) {
+                        return pill.getAttribute('data-reagent').toLowerCase() === name.toLowerCase();
+                    }
+                );
+            }
+
+            function relabel(pill) {
+                var key = bucketOf(pill);
+                pill.setAttribute(
+                    'aria-label',
+                    pill.getAttribute('data-reagent') + ', in ' + LABELS[key]
+                        + '. Press Enter to move to ' + LABELS[other(key)] + '.'
+                );
+            }
+
+            // Put a pill into a bucket. If that bucket already has the
+            // reagent (e.g. it was dragged onto its own pile, or onto a
+            // bucket that independently listed it) the pill is just
+            // discarded so we never show the same reagent twice.
+            function place(pill, key) {
+                if (has(key, pill.getAttribute('data-reagent'))) {
+                    if (pill.parentNode) {
+                        pill.parentNode.removeChild(pill);
+                    }
+                } else {
+                    lists[key].appendChild(pill);
+                    relabel(pill);
+                }
+                sync();
+            }
+
+            function moveToOther(pill) {
+                var target = other(bucketOf(pill));
+                place(pill, target);
+                if (pill.parentNode) {
+                    pill.focus();
+                }
+            }
+
+            function makePill(name) {
+                var pill = document.createElement('span');
+                pill.className = 'reagent-pill';
+                pill.setAttribute('data-reagent', name);
+                pill.setAttribute('draggable', 'true');
+                pill.setAttribute('tabindex', '0');
+
+                var text = document.createElement('span');
+                text.textContent = name;
+                pill.appendChild(text);
+
+                var remove = document.createElement('button');
+                remove.type = 'button';
+                remove.className = 'reagent-pill-remove';
+                remove.setAttribute('aria-label', 'Remove ' + name);
+                remove.textContent = '×';
+                remove.addEventListener('click', function (event) {
+                    // Stop this from bubbling to the pill's own click
+                    // handler, which would "move to other bucket" instead
+                    // of removing.
+                    event.stopPropagation();
+                    pill.parentNode.removeChild(pill);
+                    sync();
+                });
+                pill.appendChild(remove);
+
+                pill.addEventListener('dragstart', function (event) {
+                    dragged = pill;
+                    pill.classList.add('is-dragging');
+                    event.dataTransfer.effectAllowed = 'move';
+                    // Firefox will not start a drag at all unless some data
+                    // is set; the value itself is unused (see `dragged`).
+                    event.dataTransfer.setData('text/plain', name);
+                });
+                pill.addEventListener('dragend', function () {
+                    pill.classList.remove('is-dragging');
+                    dragged = null;
+                });
+
+                // Touch and keyboard have no usable HTML5 drag, so a plain
+                // click or Enter/Space on the pill moves it to the other
+                // bucket -- the only move this two-bucket UI ever needs.
+                pill.addEventListener('click', function () {
+                    moveToOther(pill);
+                });
+                pill.addEventListener('keydown', function (event) {
+                    if (event.key === 'Enter' || event.key === ' ' || event.key === 'Spacebar') {
+                        event.preventDefault();
+                        moveToOther(pill);
+                    }
+                });
+
+                return pill;
+            }
+
+            function addReagents(key, value) {
+                tokenize(value).forEach(function (name) {
+                    if (!has(key, name)) {
+                        var pill = makePill(name);
+                        lists[key].appendChild(pill);
+                        relabel(pill);
+                    }
+                });
+            }
+
+            function buildBucket(key) {
+                var bucket = document.createElement('div');
+                bucket.className = 'reagent-bucket';
+
+                var heading = document.createElement('h2');
+                heading.className = 'reagent-bucket-title';
+                heading.textContent = LABELS[key];
+                bucket.appendChild(heading);
+
+                var list = document.createElement('div');
+                list.className = 'reagent-bucket-list';
+                list.setAttribute('data-bucket', key);
+                bucket.appendChild(list);
+                lists[key] = list;
+
+                var add = document.createElement('input');
+                add.type = 'text';
+                add.className = 'reagent-add';
+                add.setAttribute('autocomplete', 'off');
+                add.setAttribute('aria-label', 'Add a reagent to ' + LABELS[key]);
+                add.placeholder = 'Add a reagent…';
+
+                function commit() {
+                    addReagents(key, add.value);
+                    add.value = '';
+                    sync();
+                }
+
+                add.addEventListener('keydown', function (event) {
+                    if (event.key === 'Enter' || event.key === ',') {
+                        // Enter here must not submit the form, and a comma
+                        // is a separator, not a literal character.
+                        event.preventDefault();
+                        commit();
+                    }
+                });
+                // Whatever is left half-typed when focus leaves still counts.
+                add.addEventListener('blur', commit);
+                bucket.appendChild(add);
+
+                function over(event) {
+                    if (!dragged) {
+                        return;
+                    }
+                    // preventDefault on dragenter/dragover is what marks an
+                    // element as a valid drop target.
+                    event.preventDefault();
+                    event.dataTransfer.dropEffect = 'move';
+                    bucket.classList.add('drag-over');
+                }
+                bucket.addEventListener('dragenter', over);
+                bucket.addEventListener('dragover', over);
+                bucket.addEventListener('dragleave', function (event) {
+                    // dragleave also fires when crossing between the
+                    // bucket's own children; only clear the highlight when
+                    // the pointer has genuinely left the bucket.
+                    if (!bucket.contains(event.relatedTarget)) {
+                        bucket.classList.remove('drag-over');
+                    }
+                });
+                bucket.addEventListener('drop', function (event) {
+                    event.preventDefault();
+                    bucket.classList.remove('drag-over');
+                    if (dragged) {
+                        var pill = dragged;
+                        place(pill, key);
+                        if (pill.parentNode) {
+                            pill.focus();
+                        }
+                    }
+                });
+
+                return bucket;
+            }
+
+            var board = document.createElement('div');
+            board.className = 'reagent-buckets';
+            board.appendChild(buildBucket('must'));
+            board.appendChild(buildBucket('can'));
+
+            // Seed the buckets from whatever the two fields arrived with
+            // (a resubmitted search, a shared link) before hiding them.
+            addReagents('must', mustInput.value);
+            addReagents('can', canInput.value);
+
+            var submit = conjureForm.querySelector('button[type="submit"]');
+            conjureForm.insertBefore(board, submit);
+
+            var hadAutofocus = mustInput.hasAttribute('autofocus');
+            [mustInput, canInput].forEach(function (input) {
+                input.hidden = true;
+                var label = conjureForm.querySelector('label[for="' + input.id + '"]');
+                if (label) {
+                    label.hidden = true;
+                }
+            });
+
+            // #must carried autofocus; hand it to the "Must have" add box
+            // now that the input it was on is gone.
+            if (hadAutofocus) {
+                lists.must.parentNode.querySelector('.reagent-add').focus();
+            }
+
+            // Belt-and-braces -- the hidden inputs are already kept in step
+            // on every pill change, but re-sync on submit so nothing can
+            // slip through.
+            conjureForm.addEventListener('submit', sync);
+            sync();
+        }
+    }
 })();
