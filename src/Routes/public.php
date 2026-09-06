@@ -163,25 +163,37 @@ return function (App $app): void {
     });
 
     // "Conjure a Recipe" (linked from the Recipes browse page): the reader
-    // names the reagents (ingredients) they have to hand, and gets back the
-    // published recipes that call for ANY of them, ordered by how many of
-    // those reagents each recipe uses -- most-of-what-you-have first, with
-    // newest breaking ties. The raw input is split on the same
-    // whitespace/comma runs as /recipes' search box; blank or
+    // sorts the reagents (ingredients) they have into two lists -- ones a
+    // recipe *must* call for, and ones it merely *can*. Every "must have"
+    // reagent has to appear before a recipe is considered at all; the
+    // qualifying recipes are then ordered by how many of the "can have"
+    // reagents they also use, most-of-what-you-have first, newest breaking
+    // ties. With no "must have" list the "can have" list also does the
+    // filtering (a recipe must use at least one). Each field is split on the
+    // same whitespace/comma runs as /recipes' search box; blank or
     // punctuation-only input just re-renders the empty form.
     $app->get('/conjure', function (Request $request, Response $response) use ($container): Response {
         /** @var RecipeRepository $recipes */
         $recipes = $container->get(RecipeRepository::class);
 
-        $input = trim((string) ($request->getQueryParams()['reagents'] ?? ''));
-        $reagents = $input === ''
-            ? []
-            : (preg_split('/[\s,]+/', $input, -1, PREG_SPLIT_NO_EMPTY) ?: []);
+        $params = $request->getQueryParams();
+        $mustInput = trim((string) ($params['must'] ?? ''));
+        $canInput = trim((string) ($params['can'] ?? ''));
 
-        $results = $reagents !== [] ? $recipes->listPublishedByReagents($reagents) : [];
+        $mustHave = $mustInput === ''
+            ? []
+            : (preg_split('/[\s,]+/', $mustInput, -1, PREG_SPLIT_NO_EMPTY) ?: []);
+        $canHave = $canInput === ''
+            ? []
+            : (preg_split('/[\s,]+/', $canInput, -1, PREG_SPLIT_NO_EMPTY) ?: []);
+
+        $results = ($mustHave !== [] || $canHave !== [])
+            ? $recipes->listPublishedByReagents($mustHave, $canHave)
+            : [];
 
         return Twig::fromRequest($request)->render($response, 'recipes/conjure.twig', [
-            'reagents' => $input,
+            'must' => $mustInput,
+            'can' => $canInput,
             'results' => $results,
         ]);
     });

@@ -398,13 +398,17 @@ final class RecipeRepository
     }
 
     /**
-     * Published recipes that call for ANY of the given reagents
-     * (ingredients), ranked by how many distinct reagents each one matches
-     * -- a recipe drawing on 3 of the searched reagents outranks one
-     * drawing on 2, whichever specific reagents those were; `created_at
-     * DESC` (newest first) breaks ties. Backs the "Conjure a Recipe" page
-     * (GET /conjure): the reader lists what they have to hand and gets the
-     * dishes that make the most of it, best fit first.
+     * Published recipes for the "Conjure a Recipe" page (GET /conjure),
+     * where the reader sorts the reagents (ingredients) they have into two
+     * lists. Every "must have" reagent has to appear in a recipe before it
+     * is considered at all (an AND gate); the qualifying recipes are then
+     * ranked by how many of the "can have" reagents they also draw on -- a
+     * recipe using 3 of them outranks one using 2, whichever specific ones
+     * those were -- with `created_at DESC` (newest first) breaking ties. A
+     * recipe that clears the gate but matches no "can have" reagent still
+     * appears, ranked last. With no "must have" list the "can have" list
+     * also does the filtering (a recipe must use at least one) so the query
+     * never returns the whole catalogue.
      *
      * A reagent matches when it's a substring of the recipe title OR of the
      * newline-separated `original_ingredients` text blob (there is no
@@ -413,41 +417,64 @@ final class RecipeRepository
      * match literally (convention from src/Search/LikeSearch.php); plain
      * LIKE behaves identically on MySQL and SQLite. Named string params are
      * never reused across the statement (same reason the browse filter
-     * uses one param per column) -- each reagent gets its own WHERE and
-     * ORDER BY placeholders bound to the same pattern. An empty $reagents
-     * returns [] without touching the database.
+     * uses one param per column) -- each reagent gets its own placeholders
+     * bound to the same pattern. Both lists empty returns [] without
+     * touching the database.
      *
-     * @param list<string> $reagents reagents to look for, already trimmed and non-empty
+     * @param list<string> $mustHave reagents a recipe must call for, already trimmed and non-empty
+     * @param list<string> $canHave optional reagents that only raise a recipe's rank, already trimmed and non-empty
      * @return list<RecipeRow>
      */
-    public function listPublishedByReagents(array $reagents, int $limit = 24, int $offset = 0): array
-    {
-        if ($reagents === []) {
+    public function listPublishedByReagents(
+        array $mustHave,
+        array $canHave,
+        int $limit = 24,
+        int $offset = 0,
+    ): array {
+        if ($mustHave === [] && $canHave === []) {
             return [];
         }
 
-        $matchConditions = [];
+        $conditions = ["recipes.status = 'published'"];
         $rankTerms = [];
         $params = [];
 
-        foreach ($reagents as $i => $reagent) {
+        foreach ($mustHave as $i => $reagent) {
             $like = '%' . str_replace(['%', '_'], ['\%', '\_'], $reagent) . '%';
-            $matchConditions[] = "(recipes.title LIKE :where_title_$i OR recipes.original_ingredients LIKE :where_ing_$i)";
-            $rankTerms[] = "CASE WHEN (recipes.title LIKE :rank_title_$i "
-                . "OR recipes.original_ingredients LIKE :rank_ing_$i) THEN 1 ELSE 0 END";
-            $params["where_title_$i"] = $like;
-            $params["where_ing_$i"] = $like;
-            $params["rank_title_$i"] = $like;
-            $params["rank_ing_$i"] = $like;
+            $conditions[] = "(recipes.title LIKE :must_title_$i OR recipes.original_ingredients LIKE :must_ing_$i)";
+            $params["must_title_$i"] = $like;
+            $params["must_ing_$i"] = $like;
         }
 
-        $where = implode(' OR ', $matchConditions);
-        $rank = implode(' + ', $rankTerms);
+        $canConditions = [];
+        foreach ($canHave as $i => $reagent) {
+            $like = '%' . str_replace(['%', '_'], ['\%', '\_'], $reagent) . '%';
+            $rankTerms[] = "CASE WHEN (recipes.title LIKE :rank_title_$i "
+                . "OR recipes.original_ingredients LIKE :rank_ing_$i) THEN 1 ELSE 0 END";
+            $params["rank_title_$i"] = $like;
+            $params["rank_ing_$i"] = $like;
+
+            if ($mustHave === []) {
+                $canConditions[] = "(recipes.title LIKE :can_title_$i "
+                    . "OR recipes.original_ingredients LIKE :can_ing_$i)";
+                $params["can_title_$i"] = $like;
+                $params["can_ing_$i"] = $like;
+            }
+        }
+
+        if ($canConditions !== []) {
+            $conditions[] = '(' . implode(' OR ', $canConditions) . ')';
+        }
+
+        $where = implode(' AND ', $conditions);
+        $orderBy = $rankTerms !== []
+            ? '(' . implode(' + ', $rankTerms) . ') DESC, recipes.created_at DESC'
+            : 'recipes.created_at DESC';
 
         $statement = $this->pdo->prepare(
             "SELECT recipes.* FROM recipes "
-            . "WHERE recipes.status = 'published' AND ($where) "
-            . "ORDER BY ($rank) DESC, recipes.created_at DESC LIMIT :limit OFFSET :offset",
+            . "WHERE $where "
+            . "ORDER BY $orderBy LIMIT :limit OFFSET :offset",
         );
         foreach ($params as $key => $value) {
             $statement->bindValue($key, $value);
