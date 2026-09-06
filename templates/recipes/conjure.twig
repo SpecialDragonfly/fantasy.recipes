@@ -1,0 +1,33 @@
+{% extends 'layout.twig' %}
+
+{% block title %}Conjure a Recipe - Fantasy Recipes{% endblock %}
+
+{% block content %}
+    <h1>Conjure a Recipe</h1>
+
+    <p>Every recipe is a ritual, and every ritual needs its reagents. Name what
+    you have to hand &mdash; one per line, or run them together with commas
+    &mdash; and the kitchen will answer with the dishes that make the most of
+    them.</p>
+
+    <form method="get" action="/conjure" class="recipe-filter-form recipe-search-form" role="search">
+        <label for="reagents">Reagents</label>
+        <input type="search" id="reagents" name="reagents" value="{{ reagents|default('') }}" placeholder="e.g. chicken, garlic, thyme" autofocus>
+        <button type="submit">Conjure</button>
+        {% if reagents %}<a href="/conjure">Clear</a>{% endif %}
+    </form>
+
+    {% if reagents %}
+        {% if results|length %}
+            <div class="recipe-grid">
+                {% for recipe in results %}
+                    <article class="panel recipe-card">
+                        <h2><a href="/recipes/{{ recipe.slug }}">{{ recipe.title }}</a></h2>
+                    </article>
+                {% endfor %}
+            </div>
+        {% else %}
+            <p class="panel">Nothing answered that call. Try another reagent.</p>
+        {% endif %}
+    {% endif %}
+{% endblock %}

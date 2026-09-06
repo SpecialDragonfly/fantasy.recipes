@@ -398,6 +398,69 @@ final class RecipeRepository
     }
 
     /**
+     * Published recipes that call for ANY of the given reagents
+     * (ingredients), ranked by how many distinct reagents each one matches
+     * -- a recipe drawing on 3 of the searched reagents outranks one
+     * drawing on 2, whichever specific reagents those were; `created_at
+     * DESC` (newest first) breaks ties. Backs the "Conjure a Recipe" page
+     * (GET /conjure): the reader lists what they have to hand and gets the
+     * dishes that make the most of it, best fit first.
+     *
+     * A reagent matches when it's a substring of the recipe title OR of the
+     * newline-separated `original_ingredients` text blob (there is no
+     * ingredients table) -- the same per-term shape as
+     * publishedBrowseFilter(). % and _ in a reagent are escaped so they
+     * match literally (convention from src/Search/LikeSearch.php); plain
+     * LIKE behaves identically on MySQL and SQLite. Named string params are
+     * never reused across the statement (same reason the browse filter
+     * uses one param per column) -- each reagent gets its own WHERE and
+     * ORDER BY placeholders bound to the same pattern. An empty $reagents
+     * returns [] without touching the database.
+     *
+     * @param list<string> $reagents reagents to look for, already trimmed and non-empty
+     * @return list<RecipeRow>
+     */
+    public function listPublishedByReagents(array $reagents, int $limit = 24, int $offset = 0): array
+    {
+        if ($reagents === []) {
+            return [];
+        }
+
+        $matchConditions = [];
+        $rankTerms = [];
+        $params = [];
+
+        foreach ($reagents as $i => $reagent) {
+            $like = '%' . str_replace(['%', '_'], ['\%', '\_'], $reagent) . '%';
+            $matchConditions[] = "(recipes.title LIKE :where_title_$i OR recipes.original_ingredients LIKE :where_ing_$i)";
+            $rankTerms[] = "CASE WHEN (recipes.title LIKE :rank_title_$i "
+                . "OR recipes.original_ingredients LIKE :rank_ing_$i) THEN 1 ELSE 0 END";
+            $params["where_title_$i"] = $like;
+            $params["where_ing_$i"] = $like;
+            $params["rank_title_$i"] = $like;
+            $params["rank_ing_$i"] = $like;
+        }
+
+        $where = implode(' OR ', $matchConditions);
+        $rank = implode(' + ', $rankTerms);
+
+        $statement = $this->pdo->prepare(
+            "SELECT recipes.* FROM recipes "
+            . "WHERE recipes.status = 'published' AND ($where) "
+            . "ORDER BY ($rank) DESC, recipes.created_at DESC LIMIT :limit OFFSET :offset",
+        );
+        foreach ($params as $key => $value) {
+            $statement->bindValue($key, $value);
+        }
+        $statement->bindValue('limit', $limit, PDO::PARAM_INT);
+        $statement->bindValue('offset', $offset, PDO::PARAM_INT);
+        $statement->execute();
+
+        /** @var list<RecipeRow> */
+        return $statement->fetchAll();
+    }
+
+    /**
      * Every recipe regardless of status, optionally filtered by a title
      * search, a single tag, and/or status ('draft'/'published') -- feeds
      * /admin/recipes' search bar + filters. Same shared-WHERE-builder shape

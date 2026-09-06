@@ -162,6 +162,30 @@ return function (App $app): void {
         ]);
     });
 
+    // "Conjure a Recipe" (linked from the Recipes browse page): the reader
+    // names the reagents (ingredients) they have to hand, and gets back the
+    // published recipes that call for ANY of them, ordered by how many of
+    // those reagents each recipe uses -- most-of-what-you-have first, with
+    // newest breaking ties. The raw input is split on the same
+    // whitespace/comma runs as /recipes' search box; blank or
+    // punctuation-only input just re-renders the empty form.
+    $app->get('/conjure', function (Request $request, Response $response) use ($container): Response {
+        /** @var RecipeRepository $recipes */
+        $recipes = $container->get(RecipeRepository::class);
+
+        $input = trim((string) ($request->getQueryParams()['reagents'] ?? ''));
+        $reagents = $input === ''
+            ? []
+            : (preg_split('/[\s,]+/', $input, -1, PREG_SPLIT_NO_EMPTY) ?: []);
+
+        $results = $reagents !== [] ? $recipes->listPublishedByReagents($reagents) : [];
+
+        return Twig::fromRequest($request)->render($response, 'recipes/conjure.twig', [
+            'reagents' => $input,
+            'results' => $results,
+        ]);
+    });
+
     // Plain browse-by-tag index -- tags stay functional/plain in display
     // even though the same pool holds whimsical easter-egg tags (spec.md --
     // Immersion Rules).

@@ -10,6 +10,7 @@
         <input type="search" id="q" name="q" value="{{ search|default('') }}" placeholder="e.g. chicken garlic">
         {% if activeTag %}<input type="hidden" name="tag" value="{{ activeTag.id }}">{% endif %}
         <button type="submit">Search</button>
+        <a href="/conjure">Conjure a Recipe</a>
         {% if search %}<a href="/recipes{{ activeTag ? '?tag=' ~ activeTag.id : '' }}">Clear</a>{% endif %}
     </form>
 

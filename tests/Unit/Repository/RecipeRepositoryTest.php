@@ -183,6 +183,76 @@ final class RecipeRepositoryTest extends TestCase
         self::assertSame([], $this->repository->listPublishedBrowse(['chi_ken']));
     }
 
+    public function testListPublishedByReagentsRanksByHowManyReagentsMatch(): void
+    {
+        // Uses all three searched reagents.
+        $threeMatch = $this->publish('hearty-stew', 'Hearty Stew', "beef\nonion\ncarrot");
+        // Uses two of them.
+        $twoMatch = $this->publish('beef-onion-pie', 'Beef and Onion Pie', "beef\nonion\npastry");
+        // Uses one of them.
+        $oneMatch = $this->publish('carrot-cake', 'Carrot Cake', "carrot\nflour\nsugar");
+
+        $ids = array_column(
+            $this->repository->listPublishedByReagents(['beef', 'onion', 'carrot']),
+            'id',
+        );
+
+        self::assertSame([$threeMatch, $twoMatch, $oneMatch], $ids);
+    }
+
+    public function testListPublishedByReagentsOrsTheReagentsTogether(): void
+    {
+        $chicken = $this->publish('roast-chicken', 'Roast Chicken', "chicken\ngarlic");
+        $bread = $this->publish('garlic-bread', 'Garlic Bread', "bread\nbutter");
+        $this->publish('plain-rice', 'Plain Rice', "rice\nwater");
+
+        $ids = array_column(
+            $this->repository->listPublishedByReagents(['chicken', 'garlic']),
+            'id',
+        );
+
+        sort($ids);
+        $expected = [$chicken, $bread];
+        sort($expected);
+        self::assertSame($expected, $ids);
+    }
+
+    public function testListPublishedByReagentsMatchesAReagentFoundOnlyInAnIngredient(): void
+    {
+        $id = $this->publish('roast-chicken', 'Roast Chicken', "chicken thighs\ngarlic cloves\nsaffron threads");
+
+        self::assertSame(
+            [$id],
+            array_column($this->repository->listPublishedByReagents(['saffron']), 'id'),
+        );
+    }
+
+    public function testListPublishedByReagentsExcludesDrafts(): void
+    {
+        $draftId = $this->repository->create('dragon-stew', 'Dragon Stew', null, "dragon\nonion", '');
+
+        self::assertSame([], $this->repository->listPublishedByReagents(['dragon']));
+        self::assertNotContains(
+            $draftId,
+            array_column($this->repository->listPublishedByReagents(['onion']), 'id'),
+        );
+    }
+
+    public function testListPublishedByReagentsTreatsWildcardCharactersLiterally(): void
+    {
+        $this->publish('roast-chicken', 'Roast Chicken', "chicken\ngarlic");
+
+        self::assertSame([], $this->repository->listPublishedByReagents(['ch%en']));
+        self::assertSame([], $this->repository->listPublishedByReagents(['chi_ken']));
+    }
+
+    public function testListPublishedByReagentsReturnsNothingForNoReagents(): void
+    {
+        $this->publish('roast-chicken', 'Roast Chicken', "chicken\ngarlic");
+
+        self::assertSame([], $this->repository->listPublishedByReagents([]));
+    }
+
     private function publish(string $slug, string $title, string $ingredients): int
     {
         $id = $this->repository->create($slug, $title, null, $ingredients, '');
