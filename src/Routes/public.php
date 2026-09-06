@@ -49,7 +49,24 @@ return function (App $app): void {
         $tagId = isset($query['tag']) && ctype_digit((string) $query['tag']) ? (int) $query['tag'] : null;
         $activeTag = $tagId !== null ? $tags->findById($tagId) : null;
 
-        if ($activeTag !== null) {
+        // Free-text search over recipe title + individual ingredients. The
+        // raw string is split on runs of whitespace and/or commas; the
+        // resulting terms are AND-ed (a recipe matches only if every term is
+        // a substring of its title or of one of its newline-separated
+        // ingredients). Empty / punctuation-only input leaves $terms empty
+        // and the two pre-existing branches below run unchanged.
+        $search = trim((string) ($query['q'] ?? ''));
+        $terms = $search === ''
+            ? []
+            : (preg_split('/[\s,]+/', $search, -1, PREG_SPLIT_NO_EMPTY) ?: []);
+
+        if ($terms !== []) {
+            // Search composes with the tag filter (both narrow together).
+            $searchTagId = $activeTag !== null ? (int) $activeTag['id'] : null;
+            $recipeRows = $recipes->listPublishedBrowse($terms, $searchTagId, $limit, $offset);
+            $total = $recipes->countPublishedBrowse($terms, $searchTagId);
+            $hasNext = $offset + count($recipeRows) < $total;
+        } elseif ($activeTag !== null) {
             // No countPublishedByTag() exists -- fetch one extra row instead
             // of a separate COUNT query to decide whether there's a next page.
             $rows = $recipes->listPublishedByTag($activeTag['id'], $limit + 1, $offset);
@@ -66,6 +83,7 @@ return function (App $app): void {
             'recipes' => $recipeRows,
             'tags' => $tags->all(),
             'activeTag' => $activeTag,
+            'search' => $search,
             'page' => $page,
             'hasNext' => $hasNext,
             'hasPrev' => $page > 1,

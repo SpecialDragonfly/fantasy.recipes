@@ -347,6 +347,57 @@ final class RecipeRepository
     }
 
     /**
+     * Published recipes matching a free-text search over the recipe title
+     * and its individual (newline-separated) ingredients, newest first --
+     * backs the search box on the public /recipes browse listing. Every
+     * term must match (AND); a term matches if it's a substring of the
+     * title OR of any one ingredient. Composes with an optional single-tag
+     * filter, so search + tag narrow together. Same shared-WHERE-builder
+     * shape as adminListFilter(), so this and countPublishedBrowse() can't
+     * drift apart.
+     *
+     * @param list<string> $terms search terms, already trimmed and non-empty
+     * @return list<RecipeRow>
+     */
+    public function listPublishedBrowse(array $terms, ?int $tagId = null, int $limit = 24, int $offset = 0): array
+    {
+        [$where, $params] = self::publishedBrowseFilter($terms, $tagId);
+
+        $statement = $this->pdo->prepare(
+            "SELECT recipes.* FROM recipes $where "
+            . 'ORDER BY recipes.created_at DESC LIMIT :limit OFFSET :offset',
+        );
+        foreach ($params as $key => $value) {
+            $statement->bindValue($key, $value);
+        }
+        $statement->bindValue('limit', $limit, PDO::PARAM_INT);
+        $statement->bindValue('offset', $offset, PDO::PARAM_INT);
+        $statement->execute();
+
+        /** @var list<RecipeRow> */
+        return $statement->fetchAll();
+    }
+
+    /**
+     * Total matching listPublishedBrowse()'s same filters -- feeds the
+     * browse listing's pagination controls.
+     *
+     * @param list<string> $terms search terms, already trimmed and non-empty
+     */
+    public function countPublishedBrowse(array $terms, ?int $tagId = null): int
+    {
+        [$where, $params] = self::publishedBrowseFilter($terms, $tagId);
+
+        $statement = $this->pdo->prepare("SELECT COUNT(*) FROM recipes $where");
+        foreach ($params as $key => $value) {
+            $statement->bindValue($key, $value);
+        }
+        $statement->execute();
+
+        return (int) $statement->fetchColumn();
+    }
+
+    /**
      * Every recipe regardless of status, optionally filtered by a title
      * search, a single tag, and/or status ('draft'/'published') -- feeds
      * /admin/recipes' search bar + filters. Same shared-WHERE-builder shape
@@ -463,6 +514,43 @@ final class RecipeRepository
         if ($conditions !== []) {
             $where .= ' WHERE ' . implode(' AND ', $conditions);
         }
+
+        return [$where, $params];
+    }
+
+    /**
+     * Shared WHERE builder for listPublishedBrowse() + countPublishedBrowse().
+     * Always constrains to status = 'published'; adds one
+     * "(title LIKE :term OR original_ingredients LIKE :term)" condition per
+     * search term (AND-ed together); and, when a tag id is given, the same
+     * INNER JOIN recipe_tags used by adminListFilter(). % and _ in a term are
+     * escaped so they match literally (convention from src/Search/LikeSearch.php).
+     * Plain LIKE works identically on MySQL and SQLite, so no FULLTEXT / driver
+     * split is needed here.
+     *
+     * @param list<string> $terms
+     * @return array{0: string, 1: array<string, string|int>}
+     */
+    private static function publishedBrowseFilter(array $terms, ?int $tagId): array
+    {
+        $joins = [];
+        $conditions = ["recipes.status = 'published'"];
+        $params = [];
+
+        if ($tagId !== null) {
+            $joins[] = 'INNER JOIN recipe_tags rt_filter '
+                . 'ON rt_filter.recipe_id = recipes.id AND rt_filter.tag_id = :tag_id';
+            $params['tag_id'] = $tagId;
+        }
+
+        foreach ($terms as $i => $term) {
+            $like = '%' . str_replace(['%', '_'], ['\%', '\_'], $term) . '%';
+            $conditions[] = "(recipes.title LIKE :title_$i OR recipes.original_ingredients LIKE :ingredients_$i)";
+            $params["title_$i"] = $like;
+            $params["ingredients_$i"] = $like;
+        }
+
+        $where = implode(' ', $joins) . ' WHERE ' . implode(' AND ', $conditions);
 
         return [$where, $params];
     }

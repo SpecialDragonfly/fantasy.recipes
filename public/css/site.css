@@ -801,6 +801,7 @@ button.tag-picker-save[hidden] {
 }
 
 .recipe-filter-form input[type="text"],
+.recipe-filter-form input[type="search"],
 .recipe-filter-form select {
     display: inline-block;
     vertical-align: middle;
@@ -820,6 +821,12 @@ button.tag-picker-save[hidden] {
 
 .recipe-filter-form a {
     margin-left: 0.75rem;
+}
+
+/* The /recipes browse search reuses .recipe-filter-form's panel styling but
+   sits on its own line above the tag list, so let its input take the width. */
+.recipe-search-form input[type="search"] {
+    min-width: min(22rem, 100%);
 }
 
 /* Published/unpublished one-click toggle -- a plain coloured dot, not a
