@@ -801,6 +801,7 @@ button.tag-picker-save[hidden] {
 }
 
 .recipe-filter-form input[type="text"],
+.recipe-filter-form input[type="search"],
 .recipe-filter-form select {
     display: inline-block;
     vertical-align: middle;
@@ -820,6 +821,122 @@ button.tag-picker-save[hidden] {
 
 .recipe-filter-form a {
     margin-left: 0.75rem;
+}
+
+/* The /recipes browse search reuses .recipe-filter-form's panel styling but
+   sits on its own line above the tag list, so let its input take the width. */
+.recipe-search-form input[type="search"] {
+    min-width: min(22rem, 100%);
+}
+
+/* ---- Conjure a Recipe: reagent pill buckets -------------------------------
+   site.js hides conjure.twig's plain #must / #can search inputs and layers
+   this on top -- two side-by-side drop zones whose pills drag between them
+   (see the "draggable reagent pills" block in site.js). With JS off none of
+   this exists and the two inputs show as normal.
+
+   Both `.recipe-filter-form label` (0,1,1) and `.recipe-filter-form
+   input[type="search"]` (0,2,1) set `display` explicitly, so they beat the
+   UA `[hidden]` rule -- the hidden originals would still show without this. */
+.recipe-filter-form label[hidden],
+.recipe-filter-form input[hidden] {
+    display: none;
+}
+
+.reagent-buckets {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 1rem;
+    margin: 0.5rem 0 0.75rem;
+    line-height: 1.5;
+}
+
+.reagent-bucket {
+    flex: 1 1 14rem;
+    display: flex;
+    flex-direction: column;
+    gap: 0.5rem;
+    padding: 0.75rem;
+    border: 1px solid var(--panel-border);
+    border-radius: 0.35rem;
+    background: var(--bg);
+}
+
+.reagent-bucket.drag-over {
+    outline: 2px solid var(--accent);
+    outline-offset: 1px;
+}
+
+.reagent-bucket-title {
+    margin: 0;
+    font-size: 0.95rem;
+}
+
+/* A dashed, min-height frame so an empty bucket still reads as a target. */
+.reagent-bucket-list {
+    display: flex;
+    flex-wrap: wrap;
+    align-content: flex-start;
+    gap: 0.4rem;
+    min-height: 2.75rem;
+    padding: 0.4rem;
+    border: 1px dashed var(--panel-border);
+    border-radius: 0.25rem;
+}
+
+.reagent-pill {
+    display: inline-flex;
+    align-items: center;
+    gap: 0.35rem;
+    padding: 0.15rem 0.4rem 0.15rem 0.7rem;
+    background: var(--panel-bg);
+    box-shadow: inset 0 0 0 1px var(--panel-border);
+    border-radius: 999px;
+    font-size: 0.85rem;
+    cursor: grab;
+    user-select: none;
+}
+
+.reagent-pill.is-dragging {
+    opacity: 0.5;
+    cursor: grabbing;
+}
+
+.reagent-pill:focus-visible {
+    outline: 2px solid var(--accent);
+    outline-offset: 1px;
+}
+
+/* Element-prefixed: the base `.button, button:not(.link-button)` rule
+   (0,1,1) would otherwise force `display: inline-block` and a wax-seal
+   look onto this bare × button. */
+button.reagent-pill-remove {
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    width: 1.1rem;
+    height: 1.1rem;
+    padding: 0;
+    margin: 0;
+    border: none;
+    border-radius: 50%;
+    background: none;
+    color: inherit;
+    font-size: 1rem;
+    line-height: 1;
+    cursor: pointer;
+    box-shadow: none;
+}
+
+button.reagent-pill-remove:hover {
+    background: var(--accent);
+    color: var(--accent-text);
+    filter: none;
+}
+
+.reagent-add {
+    align-self: flex-start;
+    min-width: 10rem;
 }
 
 /* Published/unpublished one-click toggle -- a plain coloured dot, not a

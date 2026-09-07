@@ -1,0 +1,38 @@
+{% extends 'layout.twig' %}
+
+{% block title %}Conjure a Recipe - Fantasy Recipes{% endblock %}
+
+{% block content %}
+    <h1>Conjure a Recipe</h1>
+
+    <p>Every recipe is a ritual, and every ritual needs its reagents. Sort what
+    you have into two piles: the ones a dish <em>must</em> call for &mdash; those
+    gate what you see &mdash; and the ones it merely <em>can</em>, which pull the
+    closest matches to the top. Type a few into each box (one per line, or run
+    them together with commas); once they become pills you can drag any reagent
+    from one pile to the other. Leave &ldquo;must have&rdquo; empty to rank purely
+    by what you have spare.</p>
+
+    <form method="get" action="/conjure" class="recipe-filter-form recipe-search-form conjure-form" role="search">
+        <label for="must">Must have</label>
+        <input type="search" id="must" name="must" value="{{ must|default('') }}" placeholder="e.g. chicken" autofocus>
+        <label for="can">Can have</label>
+        <input type="search" id="can" name="can" value="{{ can|default('') }}" placeholder="e.g. garlic, thyme">
+        <button type="submit">Conjure</button>
+        {% if must or can %}<a href="/conjure">Clear</a>{% endif %}
+    </form>
+
+    {% if must or can %}
+        {% if results|length %}
+            <div class="recipe-grid">
+                {% for recipe in results %}
+                    <article class="panel recipe-card">
+                        <h2><a href="/recipes/{{ recipe.slug }}">{{ recipe.title }}</a></h2>
+                    </article>
+                {% endfor %}
+            </div>
+        {% else %}
+            <p class="panel">Nothing answered that call. Try another reagent.</p>
+        {% endif %}
+    {% endif %}
+{% endblock %}

@@ -125,4 +125,198 @@ final class RecipeRepositoryTest extends TestCase
 
         self::assertNull($this->repository->findById($id));
     }
+
+    public function testListPublishedBrowseAndsTermsAcrossTitleAndIngredients(): void
+    {
+        // Term satisfied by an ingredient line, another by the title.
+        $roastChicken = $this->publish('roast-chicken', 'Roast Chicken', "chicken thighs\ngarlic cloves\nolive oil");
+        // Has "garlic" but no "chicken" anywhere.
+        $this->publish('garlic-bread', 'Garlic Bread', "bread\nbutter\ngarlic");
+        // Has "chicken" but no "garlic" anywhere.
+        $this->publish('chicken-soup', 'Chicken Soup', "chicken\nwater\nsalt");
+        // Matches both terms but is still a draft.
+        $draftId = $this->repository->create('chicken-garlic-stew', 'Chicken Garlic Stew', null, 'chicken\ngarlic', '');
+
+        $ids = array_column($this->repository->listPublishedBrowse(['chicken', 'garlic']), 'id');
+
+        self::assertSame([$roastChicken], $ids);
+        self::assertNotContains($draftId, $ids);
+    }
+
+    public function testListPublishedBrowseMatchesATermFoundOnlyInAnIngredient(): void
+    {
+        $id = $this->publish('roast-chicken', 'Roast Chicken', "chicken thighs\ngarlic cloves\nolive oil");
+
+        self::assertSame([$id], array_column($this->repository->listPublishedBrowse(['thighs']), 'id'));
+        self::assertSame([$id], array_column($this->repository->listPublishedBrowse(['roast']), 'id'));
+        self::assertSame([], $this->repository->listPublishedBrowse(['pineapple']));
+    }
+
+    public function testListPublishedBrowseComposesWithTheTagFilter(): void
+    {
+        $tagged = $this->publish('roast-chicken', 'Roast Chicken', "chicken thighs\ngarlic");
+        $untagged = $this->publish('chicken-curry', 'Chicken Curry', "chicken\ngarlic\ncream");
+        $tagId = $this->seedTag('dinner');
+        $this->tagRecipe($tagged, $tagId);
+
+        $ids = array_column($this->repository->listPublishedBrowse(['chicken'], $tagId), 'id');
+
+        self::assertSame([$tagged], $ids);
+        self::assertNotContains($untagged, $ids);
+    }
+
+    public function testCountPublishedBrowseMatchesTheListedResult(): void
+    {
+        $this->publish('roast-chicken', 'Roast Chicken', "chicken\ngarlic");
+        $this->publish('chicken-curry', 'Chicken Curry', "chicken\ngarlic\ncream");
+        $this->publish('garlic-bread', 'Garlic Bread', "bread\ngarlic");
+
+        self::assertSame(2, $this->repository->countPublishedBrowse(['chicken', 'garlic']));
+        self::assertSame(3, $this->repository->countPublishedBrowse(['garlic']));
+    }
+
+    public function testListPublishedBrowseTreatsWildcardCharactersLiterally(): void
+    {
+        $this->publish('roast-chicken', 'Roast Chicken', "chicken\ngarlic");
+
+        self::assertSame([], $this->repository->listPublishedBrowse(['ch%en']));
+        self::assertSame([], $this->repository->listPublishedBrowse(['chi_ken']));
+    }
+
+    public function testListPublishedByReagentsRanksByHowManyCanHaveReagentsMatch(): void
+    {
+        // Uses all three "can have" reagents.
+        $threeMatch = $this->publish('hearty-stew', 'Hearty Stew', "beef\nonion\ncarrot");
+        // Uses two of them.
+        $twoMatch = $this->publish('beef-onion-pie', 'Beef and Onion Pie', "beef\nonion\npastry");
+        // Uses one of them.
+        $oneMatch = $this->publish('carrot-cake', 'Carrot Cake', "carrot\nflour\nsugar");
+
+        $ids = array_column(
+            $this->repository->listPublishedByReagents([], ['beef', 'onion', 'carrot']),
+            'id',
+        );
+
+        self::assertSame([$threeMatch, $twoMatch, $oneMatch], $ids);
+    }
+
+    public function testListPublishedByReagentsOrsTheCanHaveReagentsTogether(): void
+    {
+        $chicken = $this->publish('roast-chicken', 'Roast Chicken', "chicken\ngarlic");
+        $bread = $this->publish('garlic-bread', 'Garlic Bread', "bread\nbutter");
+        $this->publish('plain-rice', 'Plain Rice', "rice\nwater");
+
+        $ids = array_column(
+            $this->repository->listPublishedByReagents([], ['chicken', 'garlic']),
+            'id',
+        );
+
+        sort($ids);
+        $expected = [$chicken, $bread];
+        sort($expected);
+        self::assertSame($expected, $ids);
+    }
+
+    public function testListPublishedByReagentsRequiresEveryMustHaveReagent(): void
+    {
+        $both = $this->publish('beef-onion-pie', 'Beef and Onion Pie', "beef\nonion\npastry");
+        $this->publish('beef-stew', 'Beef Stew', "beef\ncarrot\npotato");
+
+        self::assertSame(
+            [$both],
+            array_column($this->repository->listPublishedByReagents(['beef', 'onion'], []), 'id'),
+        );
+    }
+
+    public function testListPublishedByReagentsRanksMustHaveMatchesByCanHaveOverlap(): void
+    {
+        $richer = $this->publish('roast-chicken', 'Roast Chicken', "chicken\ngarlic\nthyme");
+        $plainer = $this->publish('poached-chicken', 'Poached Chicken', "chicken\nwater\nsalt");
+
+        $ids = array_column(
+            $this->repository->listPublishedByReagents(['chicken'], ['garlic', 'thyme']),
+            'id',
+        );
+
+        // Both clear the "must have" gate; the one with more "can have" overlap leads,
+        // and the one with none is still returned.
+        self::assertSame([$richer, $plainer], $ids);
+    }
+
+    public function testListPublishedByReagentsReturnsMustHaveOnlyMatchesUnranked(): void
+    {
+        $pie = $this->publish('beef-pie', 'Beef Pie', "beef\npastry");
+        $stew = $this->publish('beef-stew', 'Beef Stew', "beef\ncarrot");
+        $this->publish('carrot-cake', 'Carrot Cake', "carrot\nflour");
+
+        $ids = array_column($this->repository->listPublishedByReagents(['beef'], []), 'id');
+
+        sort($ids);
+        $expected = [$pie, $stew];
+        sort($expected);
+        self::assertSame($expected, $ids);
+    }
+
+    public function testListPublishedByReagentsMatchesAReagentFoundOnlyInAnIngredient(): void
+    {
+        $id = $this->publish('roast-chicken', 'Roast Chicken', "chicken thighs\ngarlic cloves\nsaffron threads");
+
+        self::assertSame(
+            [$id],
+            array_column($this->repository->listPublishedByReagents([], ['saffron']), 'id'),
+        );
+    }
+
+    public function testListPublishedByReagentsExcludesDrafts(): void
+    {
+        $draftId = $this->repository->create('dragon-stew', 'Dragon Stew', null, "dragon\nonion", '');
+
+        self::assertSame([], $this->repository->listPublishedByReagents([], ['dragon']));
+        self::assertSame([], $this->repository->listPublishedByReagents(['dragon'], []));
+        self::assertNotContains(
+            $draftId,
+            array_column($this->repository->listPublishedByReagents([], ['onion']), 'id'),
+        );
+    }
+
+    public function testListPublishedByReagentsTreatsWildcardCharactersLiterally(): void
+    {
+        $this->publish('roast-chicken', 'Roast Chicken', "chicken\ngarlic");
+
+        self::assertSame([], $this->repository->listPublishedByReagents([], ['ch%en']));
+        self::assertSame([], $this->repository->listPublishedByReagents([], ['chi_ken']));
+        self::assertSame([], $this->repository->listPublishedByReagents(['ch%en'], []));
+        self::assertSame([], $this->repository->listPublishedByReagents(['chi_ken'], []));
+    }
+
+    public function testListPublishedByReagentsReturnsNothingWhenBothListsAreEmpty(): void
+    {
+        $this->publish('roast-chicken', 'Roast Chicken', "chicken\ngarlic");
+
+        self::assertSame([], $this->repository->listPublishedByReagents([], []));
+    }
+
+    private function publish(string $slug, string $title, string $ingredients): int
+    {
+        $id = $this->repository->create($slug, $title, null, $ingredients, '');
+        $this->repository->setPublished($id, true);
+
+        return $id;
+    }
+
+    private function seedTag(string $name): int
+    {
+        $statement = $this->pdo->prepare('INSERT INTO tags (name) VALUES (:name)');
+        $statement->execute(['name' => $name]);
+
+        return (int) $this->pdo->lastInsertId();
+    }
+
+    private function tagRecipe(int $recipeId, int $tagId): void
+    {
+        $statement = $this->pdo->prepare(
+            'INSERT INTO recipe_tags (recipe_id, tag_id) VALUES (:recipe_id, :tag_id)',
+        );
+        $statement->execute(['recipe_id' => $recipeId, 'tag_id' => $tagId]);
+    }
 }

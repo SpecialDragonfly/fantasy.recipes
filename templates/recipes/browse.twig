@@ -5,14 +5,23 @@
 {% block content %}
     <h1>{{ activeTag ? 'Tagged: ' ~ activeTag.name : 'Recipes' }}</h1>
 
+    <form method="get" action="/recipes" class="recipe-filter-form recipe-search-form" role="search">
+        <label for="q">Search</label>
+        <input type="search" id="q" name="q" value="{{ search|default('') }}" placeholder="e.g. chicken garlic">
+        {% if activeTag %}<input type="hidden" name="tag" value="{{ activeTag.id }}">{% endif %}
+        <button type="submit">Search</button>
+        <a href="/conjure">Conjure a Recipe</a>
+        {% if search %}<a href="/recipes{{ activeTag ? '?tag=' ~ activeTag.id : '' }}">Clear</a>{% endif %}
+    </form>
+
     {% if activeTag %}
-        <p><a href="/recipes">&larr; All recipes</a></p>
+        <p><a href="/recipes{{ search ? '?q=' ~ search|url_encode : '' }}">&larr; All recipes</a></p>
     {% endif %}
 
     {% if tags|length %}
         <p class="tag-filter-list">
             {% for tag in tags %}
-                <a href="/recipes?tag={{ tag.id }}"{{ activeTag and activeTag.id == tag.id ? ' class="active"' : '' }}>{{ tag.name }}</a>{% if not loop.last %} &middot; {% endif %}
+                <a href="/recipes?tag={{ tag.id }}{{ search ? '&q=' ~ search|url_encode : '' }}"{{ activeTag and activeTag.id == tag.id ? ' class="active"' : '' }}>{{ tag.name }}</a>{% if not loop.last %} &middot; {% endif %}
             {% endfor %}
         </p>
     {% endif %}
@@ -26,12 +35,14 @@
             {% endfor %}
         </div>
     {% else %}
-        <p class="panel">No recipes here yet.</p>
+        <p class="panel">
+            {% if search %}Nothing matched &ldquo;{{ search }}&rdquo;.{% else %}No recipes here yet.{% endif %}
+        </p>
     {% endif %}
 
     <p class="pagination">
-        {% if hasPrev %}<a href="/recipes?page={{ page - 1 }}{{ activeTag ? '&tag=' ~ activeTag.id : '' }}">&larr; Previous</a>{% endif %}
+        {% if hasPrev %}<a href="/recipes?page={{ page - 1 }}{{ activeTag ? '&tag=' ~ activeTag.id : '' }}{{ search ? '&q=' ~ search|url_encode : '' }}">&larr; Previous</a>{% endif %}
         {% if hasPrev and hasNext %} &middot; {% endif %}
-        {% if hasNext %}<a href="/recipes?page={{ page + 1 }}{{ activeTag ? '&tag=' ~ activeTag.id : '' }}">Next &rarr;</a>{% endif %}
+        {% if hasNext %}<a href="/recipes?page={{ page + 1 }}{{ activeTag ? '&tag=' ~ activeTag.id : '' }}{{ search ? '&q=' ~ search|url_encode : '' }}">Next &rarr;</a>{% endif %}
     </p>
 {% endblock %}
