@@ -59,10 +59,7 @@
                     {% endif %}
                 </p>
             {% else %}
-                <p class="grimoire-toggle">
-                    <small><a href="/login?next={{ ('/recipes/' ~ recipe.slug)|url_encode }}">Log in</a> to add this
-                        to your Grimoire.</small>
-                </p>
+                {% include 'partials/_signup_cta.twig' with {cta_next: '/recipes/' ~ recipe.slug} %}
             {% endif %}
 
             {% if story %}

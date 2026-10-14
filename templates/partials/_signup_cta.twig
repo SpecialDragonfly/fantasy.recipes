@@ -1,0 +1,14 @@
+{#
+  Sign-up call to action, guests only (the caller checks current_user).
+  Sells the one thing registering unlocks: a personal Grimoire.
+  Optional `cta_next`: path to return to after signing up/logging in.
+#}
+<aside class="panel signup-cta">
+    <h2>Keep your own Grimoire</h2>
+    <p>Sign up free and the recipes you love are yours to keep: bookmark favourites,
+        and write down your own recipes, all gathered in your personal Grimoire.</p>
+    <p>
+        <a class="button" href="/register">Sign up</a>
+        <small>Already a member? <a href="/login{% if cta_next is defined %}?next={{ cta_next|url_encode }}{% endif %}">Log in</a></small>
+    </p>
+</aside>

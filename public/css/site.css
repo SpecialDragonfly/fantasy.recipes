@@ -1553,3 +1553,31 @@ button.reagent-pill-remove:hover {
     display: block;
     margin: 0.1rem 0;
 }
+
+/* ---- Sign-up call to action (partials/_signup_cta.twig) ---- */
+.signup-cta {
+    margin: 1rem auto;
+    text-align: center;
+}
+
+.signup-cta h2 {
+    margin-top: 0;
+}
+
+.signup-cta small {
+    display: block;
+    margin-top: 0.75rem;
+}
+
+/* Guest teaser on the landing page: the Grimoire card in greyscale with the
+   sign-up call to action inside it. */
+.landing-card-locked {
+    filter: grayscale(1);
+}
+
+.landing-card-cta {
+    text-align: center;
+    font-size: 0.85rem;
+    padding: 0.5rem 0.4rem 0;
+    font-weight: bold;
+}

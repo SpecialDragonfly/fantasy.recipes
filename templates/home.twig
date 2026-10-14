@@ -12,7 +12,7 @@
 
   Card / menu visibility:
    - Recipes, Writers: always.
-   - Grimoire: only when logged in (it's a User-tier feature).
+   - Grimoire: always; guests get a greyscale sign-up teaser card.
    - Admin: only for a logged-in admin.
    - Login (guest) <-> Logout (logged in).
 #}
@@ -49,6 +49,15 @@
             <a class="landing-card-body" href="/grimoire">
                 <span class="landing-card-art landing-art-grimoire" aria-hidden="true">📖</span>
                 <span class="landing-card-name">Grimoire</span>
+            </a>
+        </div>
+        {% else %}
+        {# Guest teaser: same card, greyscale, the sign-up call to action inside. #}
+        <div class="landing-card landing-card-locked">
+            <a class="landing-card-body" href="/register">
+                <span class="landing-card-art landing-art-grimoire" aria-hidden="true">📖</span>
+                <span class="landing-card-name">Grimoire</span>
+                <span class="landing-card-cta">Sign up to get your own personal Grimoire</span>
             </a>
         </div>
         {% endif %}
