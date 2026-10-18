@@ -33,6 +33,21 @@ The `web` service binds to `127.0.0.1:8080` only -- it's designed to sit
 behind the host's existing nginx reverse proxy, not to face the internet
 directly.
 
+## Front-end assets
+
+Edit `assets/css/site.css` and `assets/js/site.js`, never the copies in
+`public/`. Those are minified build output, and they are committed because
+deploying is just `git pull`.
+
+```
+npm install        # once; also installs the pre-commit hook
+npm run watch      # rebuild (unminified) while developing
+npm run build      # minified build
+```
+
+The pre-commit hook runs the build whenever `assets/` changes and stages the
+result. Run `npm run build` before committing if the hook isn't installed.
+
 ## Static analysis
 
 ```

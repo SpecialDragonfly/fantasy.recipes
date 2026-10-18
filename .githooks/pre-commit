@@ -1,0 +1,7 @@
+#!/bin/sh
+# Rebuild the minified assets whenever their sources are staged, so
+# public/css and public/js (what the Pi serves after `git pull`) never drift.
+if git diff --cached --name-only | grep -q '^assets/'; then
+    bin/build-assets || exit 1
+    git add public/css/site.css public/js/site.js
+fi
