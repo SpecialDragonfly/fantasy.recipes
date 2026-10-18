@@ -37,5 +37,18 @@ services:
       - "127.0.0.1:8080:80"
     restart: unless-stopped
 
+  # One-shot asset build: `docker compose run --rm assets` (or bin/build-assets).
+  # Behind a profile so `docker compose up -d` on the Pi never starts it; the
+  # Pi serves the committed public/ output and has no need for Node.
+  assets:
+    profiles: ["tools"]
+    image: node:22-alpine
+    working_dir: /app
+    volumes:
+      - ./:/app
+    environment:
+      HOME: /tmp
+    command: sh -c "npm ci --ignore-scripts && npm run build"
+
 volumes:
   uploads:

@@ -1,0 +1,14 @@
+#!/bin/sh
+# Build the minified CSS/JS into public/. Uses the local Node when it matches
+# .nvmrc's major version; otherwise runs the build in the pinned node image
+# (docker-compose.yml -- assets), so Node never has to be installed.
+cd "$(dirname "$0")/.." || exit 1
+
+want=$(cut -d. -f1 .nvmrc)
+have=$(node -v 2>/dev/null | sed 's/^v//' | cut -d. -f1)
+
+if [ "$have" = "$want" ]; then
+    npm ci --ignore-scripts --silent && npm run build --silent
+else
+    docker compose run --rm --user "$(id -u):$(id -g)" assets
+fi
