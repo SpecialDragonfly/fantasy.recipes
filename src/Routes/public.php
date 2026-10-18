@@ -4,7 +4,9 @@ declare(strict_types=1);
 
 use App\Auth\SessionAuth;
 use App\Http\CrawlerAudience;
+use App\Http\MetaDescription;
 use App\Http\RecipeJsonLd;
+use App\Http\Sitemap;
 use App\Repository\GrimoireRepository;
 use App\Repository\RecipeRepository;
 use App\Repository\RecipeViewRepository;
@@ -28,6 +30,20 @@ return function (App $app): void {
         return Twig::fromRequest($request)->render($response, 'home.twig', [
             'title' => 'fantasy.recipes',
         ]);
+    });
+
+    // Built from the database on every request, so a newly published (or
+    // unpublished) recipe appears (or vanishes) immediately -- there is no
+    // sitemap file to regenerate. Listed in public/robots.txt.
+    $app->get('/sitemap.xml', function (Request $request, Response $response) use ($container): Response {
+        /** @var RecipeRepository $recipes */
+        $recipes = $container->get(RecipeRepository::class);
+        /** @var array{app_url: string} $settings */
+        $settings = $container->get('settings');
+
+        $response->getBody()->write(Sitemap::build($settings['app_url'], $recipes->listPublishedForSitemap()));
+
+        return $response->withHeader('Content-Type', 'application/xml; charset=utf-8');
     });
 
     // Browse published recipes, optionally filtered to a single tag.
@@ -142,6 +158,11 @@ return function (App $app): void {
             'tags' => $recipeTags,
             'inGrimoire' => $inGrimoire,
             'recipeJsonLd' => RecipeJsonLd::build($recipe, $story, $recipeTags, $canonicalUrl),
+            'metaDescription' => MetaDescription::fromText(
+                $story !== null && trim((string) $story['body']) !== ''
+                    ? (string) $story['body']
+                    : $recipe['title'] . ' - a recipe from Fantasy Recipes.'
+            ),
         ]);
     });
 

@@ -1,0 +1,35 @@
+{#
+  Search / social meta tags, shared by layout.twig and the standalone
+  home.twig. Expects:
+    seo_title        HTML-escaped text (also used for og:title / twitter:title)
+    seo_description  HTML-escaped text, ~155 chars; empty to omit
+    seo_path         site-relative path for the canonical + og:url (no query)
+    seo_robots       'index,follow' or 'noindex,nofollow'
+    seo_type         og:type -- 'website' or 'article'
+  Title and description arrive from layout.twig via block(), which is already
+  escaped -- hence |raw here; home.twig passes constants with no markup chars.
+  The canonical host comes from APP_URL (global `app_url`), never from the
+  request's Host header, so a stray alias can't become a canonical.
+#}
+{% set seo_url = app_url ~ seo_path %}
+{% set seo_image = app_url ~ '/images/share-image.png' %}
+{% if seo_description %}<meta name="description" content="{{ seo_description|raw }}">{% endif %}
+
+<meta name="robots" content="{{ seo_robots }}">
+<link rel="canonical" href="{{ seo_url }}">
+<meta property="og:site_name" content="Fantasy Recipes">
+<meta property="og:locale" content="en_GB">
+<meta property="og:type" content="{{ seo_type }}">
+<meta property="og:title" content="{{ seo_title|raw }}">
+{% if seo_description %}<meta property="og:description" content="{{ seo_description|raw }}">{% endif %}
+
+<meta property="og:url" content="{{ seo_url }}">
+<meta property="og:image" content="{{ seo_image }}">
+<meta property="og:image:width" content="1200">
+<meta property="og:image:height" content="630">
+<meta property="og:image:alt" content="Fantasy Recipes: pixel-art dishes and a cauldron beside the site wordmark.">
+<meta name="twitter:card" content="summary_large_image">
+<meta name="twitter:title" content="{{ seo_title|raw }}">
+{% if seo_description %}<meta name="twitter:description" content="{{ seo_description|raw }}">{% endif %}
+
+<meta name="twitter:image" content="{{ seo_image }}">

@@ -28,7 +28,10 @@ return function (App $app): void {
     // with Twig::fromRequest() used throughout the route files -- use
     // ::create() instead, which defaults the attribute name to "view".
     $app->add(TwigMiddleware::create($app, $container->get(Twig::class)));
-    $app->add(new TwigGlobalsMiddleware($container->get(Twig::class)));
+    $app->add(new TwigGlobalsMiddleware(
+        $container->get(Twig::class),
+        $container->get('settings')['app_url'],
+    ));
 
     // slim/csrf stores its token pair in $_SESSION by default, which is why
     // SessionStartMiddleware is added after (= runs before) this one.

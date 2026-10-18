@@ -2,6 +2,11 @@
 
 {% block title %}{{ recipe.title }} - Fantasy Recipes{% endblock %}
 
+{% block meta_description %}{{ metaDescription }}{% endblock %}
+{% block canonical_path %}/recipes/{{ recipe.slug }}{% endblock %}
+{% block robots %}index,follow{% endblock %}
+{% block og_type %}article{% endblock %}
+
 {% block head_extra %}
     {% if recipeJsonLd %}
         {# Already-serialized JSON, not HTML -- see App\Http\RecipeJsonLd's

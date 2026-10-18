@@ -262,6 +262,23 @@ final class RecipeRepository
     }
 
     /**
+     * Slug + last-modified time of every published recipe, for the sitemap.
+     * Read live on each request, so publishing or unpublishing a recipe is
+     * reflected immediately with nothing to regenerate.
+     *
+     * @return list<array{slug: string, updated_at: string}>
+     */
+    public function listPublishedForSitemap(): array
+    {
+        $statement = $this->pdo->query(
+            "SELECT slug, updated_at FROM recipes WHERE status = 'published' ORDER BY created_at DESC, id DESC",
+        );
+
+        /** @var list<array{slug: string, updated_at: string}> */
+        return $statement->fetchAll();
+    }
+
+    /**
      * Published recipes that haven't been announced by a marketing email
      * yet (notified_at IS NULL). Oldest first -- if several are waiting,
      * they're announced together as one digest in publish order. See

@@ -5,6 +5,25 @@
     <meta name="viewport" content="width=device-width, initial-scale=1">
     <title>{% block title %}Fantasy Recipes{% endblock %}</title>
     {% include 'partials/_favicons.twig' %}
+    {# Defaults for the SEO partial. Declared inside a never-true `if` so they
+       register as overridable blocks without rendering here. #}
+    {% if false %}
+        {% block meta_description %}{% endblock %}
+        {% block canonical_path %}{{ request.uri.path }}{% endblock %}
+        {% block robots %}noindex,nofollow{% endblock %}
+        {% block og_type %}website{% endblock %}
+    {% endif %}
+    {# Pages are noindex unless they opt in by overriding `robots` -- public
+       content pages do, account/admin/auth/search-result pages and the 404
+       stay out of the index by default. #}
+    {% include 'partials/_seo.twig' with {
+        seo_title: block('title')|striptags,
+        seo_description: block('meta_description'),
+        seo_path: block('canonical_path'),
+        seo_robots: block('robots'),
+        seo_type: block('og_type'),
+        app_url: app_url,
+    } only %}
     <link rel="stylesheet" href="/css/site.css?v={{ asset_version }}">
     {% block head_extra %}{% endblock %}
 </head>

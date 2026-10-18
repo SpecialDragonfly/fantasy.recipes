@@ -22,6 +22,8 @@ use Slim\Views\Twig;
  *    as ..." affordance with a "Return to admin" button.
  *  - `flash_messages`: one-shot messages queued by the previous request via
  *    App\Http\Flash, consumed (read + cleared) here.
+ *  - `app_url`: the canonical origin (APP_URL, no trailing slash), used by
+ *    partials/_seo.twig for canonical and og:url.
  *  - `request`: the current request, so templates can read
  *    `request.getAttribute('csrf_name'/'csrf_value')` (set by CsrfMiddleware,
  *    which runs before this one) to render CSRF hidden fields -- see
@@ -29,7 +31,10 @@ use Slim\Views\Twig;
  */
 final class TwigGlobalsMiddleware implements MiddlewareInterface
 {
-    public function __construct(private readonly Twig $twig)
+    public function __construct(
+        private readonly Twig $twig,
+        private readonly string $appUrl = 'http://localhost',
+    )
     {
     }
 
@@ -40,6 +45,7 @@ final class TwigGlobalsMiddleware implements MiddlewareInterface
         $environment->addGlobal('impersonator', SessionAuth::impersonator());
         $environment->addGlobal('flash_messages', Flash::consume());
         $environment->addGlobal('request', $request);
+        $environment->addGlobal('app_url', rtrim($this->appUrl, '/'));
         $environment->addGlobal('asset_version', self::assetVersion());
 
         return $handler->handle($request);

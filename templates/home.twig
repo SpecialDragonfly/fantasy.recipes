@@ -23,6 +23,14 @@
     <meta name="viewport" content="width=device-width, initial-scale=1">
     <title>Fantasy Recipes</title>
     {% include 'partials/_favicons.twig' %}
+    {% include 'partials/_seo.twig' with {
+        seo_title: 'Fantasy Recipes',
+        seo_description: 'Recipes for the fantastical: cook dishes from fantasy worlds, read the stories behind them, and conjure your own.',
+        seo_path: '/',
+        seo_robots: 'index,follow',
+        seo_type: 'website',
+        app_url: app_url,
+    } only %}
     <link rel="stylesheet" href="/css/site.css?v={{ asset_version }}">
 </head>
 <body class="landing">

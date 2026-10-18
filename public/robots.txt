@@ -63,3 +63,7 @@ Disallow: /
 # ─── Everyone else ─────────────────────────────────────────────
 User-agent: *
 Allow: /
+
+# ─── Sitemap ───────────────────────────────────────────────────
+# Generated live from the database: new recipes appear, unpublished ones vanish.
+Sitemap: https://fantasy.recipes/sitemap.xml

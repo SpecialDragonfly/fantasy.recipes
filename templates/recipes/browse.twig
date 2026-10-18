@@ -1,6 +1,9 @@
 {% extends 'layout.twig' %}
 
 {% block title %}Recipes - Fantasy Recipes{% endblock %}
+{% block meta_description %}Browse fantasy recipes: dishes from imagined worlds, with the stories behind them.{% endblock %}
+{% block canonical_path %}/recipes{% endblock %}
+{% block robots %}index,follow{% endblock %}
 
 {% block content %}
     <h1>{{ activeTag ? 'Tagged: ' ~ activeTag.name : 'Recipes' }}</h1>
