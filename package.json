@@ -1,0 +1,10 @@
+{
+  "name": "fantasy-recipes-assets",
+  "private": true,
+  "scripts": {
+    "build": "esbuild assets/css/site.css --minify --outfile=public/css/site.css && esbuild assets/js/site.js --minify --outfile=public/js/site.js"
+  },
+  "devDependencies": {
+    "esbuild": "0.25.0"
+  }
+}
