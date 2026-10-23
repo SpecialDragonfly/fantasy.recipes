@@ -1,13 +1,12 @@
-# Multi-arch base image -- pulls the linux/arm/v7 variant automatically when
-# built on/for the target Raspberry Pi (32-bit) hardware. See architecture.md
-# -- Stack Overview.
+# Multi-arch base image -- pulls the linux/arm64 variant automatically when
+# built on the target Raspberry Pi 4 (64-bit OS). See architecture.md --
+# Stack Overview.
 #
 # 8.5 rather than 8.2: composer.lock (generated locally against the dev
 # machine's actual PHP 8.5) resolved symfony/config, event-dispatcher,
 # filesystem, mime, and string to v8.1.x -- a transitive pull-in via
-# robmorgan/phinx -- all of which require PHP >=8.4.1. Verified 8.5-fpm-alpine
-# still publishes an arm/v7 image, so this doesn't cost the Pi target.
-FROM php:8.5-fpm-alpine
+# robmorgan/phinx -- all of which require PHP >=8.4.1.
+FROM php:8.5-fpm-alpine AS base
 
 RUN apk add --no-cache \
         icu-dev \
@@ -29,27 +28,34 @@ RUN apk add --no-cache \
 # the build). docker/php/conf.d/opcache.ini below still configures it.
 
 COPY docker/php/conf.d/opcache.ini /usr/local/etc/php/conf.d/opcache.ini
+COPY docker/php/php-fpm.d/pool.conf /usr/local/etc/php-fpm.d/zz-pool.conf
 
 COPY --from=composer:2 /usr/bin/composer /usr/bin/composer
 
 WORKDIR /app
 
+# One-shot migration image (docker compose run --rm migrate). Phinx is a dev
+# dependency, so this stage installs require-dev; the runtime stage below
+# stays --no-dev. Not the default target -- the last stage is.
+FROM base AS migrate
+COPY composer.json composer.lock* ./
+RUN composer install --prefer-dist --no-scripts --no-autoloader \
+    && composer dump-autoload --optimize
+COPY phinx.php ./
+COPY db ./db
+CMD ["vendor/bin/phinx", "migrate", "-e", "production"]
+
+FROM base AS runtime
+
 # Install dependencies first so this layer is cached across code-only
 # changes -- meaningful on the Pi's limited build CPU (see architecture.md,
 # Deploy process: `git pull` + rebuild in place, no external build service).
-#
-# --ignore-platform-req=php-64bit: the target hardware is a 32-bit ARM Pi, so
-# composer's virtual `php-64bit` package is absent, and robmorgan/phinx 0.16
-# declares `php-64bit >=8.1`. Phinx's 64-bit guard concerns big-integer
-# *data* handling; this project's migrations are pure DDL (CREATE TABLE),
-# which is unaffected on 32-bit. Everything else in the lock installs fine.
 COPY composer.json composer.lock* ./
-RUN composer install --no-dev --no-scripts --no-autoloader --prefer-dist \
-    --ignore-platform-req=php-64bit
+RUN composer install --no-dev --no-scripts --no-autoloader --prefer-dist
 
 COPY . .
 
-RUN composer dump-autoload --optimize --ignore-platform-req=php-64bit \
+RUN composer dump-autoload --optimize \
     && mkdir -p storage/uploads storage/cache \
     && chown -R www-data:www-data storage
 

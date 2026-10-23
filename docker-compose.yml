@@ -50,5 +50,20 @@ services:
       HOME: /tmp
     command: sh -c "npm ci --ignore-scripts && npm run build"
 
+  # One-shot migration run on the Pi itself: `docker compose run --rm migrate`.
+  # Uses the Dockerfile's `migrate` target (includes dev deps, so Phinx is
+  # present; the runtime image is --no-dev). phinx.php reads .env from disk
+  # rather than the process environment, hence the read-only mount.
+  migrate:
+    profiles: ["tools"]
+    build:
+      context: .
+      dockerfile: docker/php/Dockerfile
+      target: migrate
+    volumes:
+      - ./.env:/app/.env:ro
+    extra_hosts:
+      - "host.docker.internal:host-gateway"
+
 volumes:
   uploads:

@@ -9,14 +9,19 @@ product decisions.
 ## Stack Overview
 
 - **Runtime:** PHP 8.4+ (`php:8.5-fpm-alpine`) behind Nginx (`nginx:alpine`).
-  Alpine + fpm chosen for footprint; both images publish `linux/arm/v7`
-  multi-arch builds, which matters because the target hardware is a
-  **32-bit ARM (Raspberry Pi, 32-bit OS)**. Originally 8.2, bumped after
+  Alpine + fpm chosen for footprint; both images are multi-arch, and the
+  target hardware is a **Raspberry Pi 4 (4 GB) on a 64-bit OS**
+  (`linux/arm64`; previously a 32-bit Pi). Originally 8.2, bumped after
   `composer.lock` (resolved against the dev machine's actual PHP 8.5, with
   no `platform.php` pin in `composer.json`) locked `robmorgan/phinx`'s
-  transitive symfony/* dependencies to versions requiring PHP >=8.4.1 —
-  confirmed 8.5-fpm-alpine still publishes an arm/v7 image before making
-  the switch, so the Pi target is unaffected.
+  transitive symfony/* dependencies to versions requiring PHP >=8.4.1.
+- **Sizing:** the Pi shares 4 GB with the host's MariaDB (128 MB InnoDB
+  buffer pool), the reverse proxy and Docker. Opcache is 128 MB with a 16 MB
+  interned-strings buffer (`docker/php/conf.d/opcache.ini`); php-fpm runs a
+  dynamic pool of at most 8 workers recycled every 500 requests
+  (`docker/php/php-fpm.d/pool.conf`). The Pi has **no swap by default** —
+  host config, not in the repo: a 2 GB `/swapfile` with `vm.swappiness=10`
+  is recommended as a safety net against OOM kills during builds.
 - **Database:** MySQL, running **on the host, outside Docker** — the instance
   already exists (serving other things too, presumably). The database for
   this app does not exist yet and is created via Phinx migrations. Containers
@@ -25,11 +30,11 @@ product decisions.
   PHPUnit locally without a MySQL dependency.
 - **Migrations:** Phinx — a **dev/deploy-only tool**, in `require-dev`, not
   the runtime image. The app itself never touches Phinx (thin PDO
-  repositories only), and Phinx 0.16 can't run on the 32-bit ARM target at
-  all: it requires composer's `php-64bit` platform package, and its
-  14-digit `YYYYMMDDHHMMSS` migration versions overflow `PHP_INT_MAX` on
-  32-bit PHP. Migrations are run from a 64-bit machine against the target DB
-  (see Deployment & Networking).
+  repositories only), and Now that the target is 64-bit, Phinx runs on the Pi
+  itself via the one-shot `migrate` compose service (Dockerfile `migrate`
+  target, `tools` profile; see Deployment & Networking). Phinx's 14-digit
+  `YYYYMMDDHHMMSS` versions would overflow `PHP_INT_MAX` on 32-bit PHP, so
+  this would not have worked on the previous 32-bit Pi.
 - **Linting:** PHPStan.
 - **Tests:** PHPUnit.
 - **Web framework:** Slim 4 (PSR-7/PSR-15), not a full-stack framework.
@@ -50,9 +55,9 @@ product decisions.
 - **CSRF:** `slim/csrf` middleware on every state-changing route (register,
   login, story submission, admin publish/edit/tag/approve actions).
 - **Auth:** `password_hash()` / `password_verify()` with `PASSWORD_DEFAULT`
-  (bcrypt). Argon2 variants avoided deliberately — libargon2 availability on
-  Alpine/ARM32 base images isn't guaranteed, bcrypt is universally available
-  and sufficient here.
+  (bcrypt). Argon2 variants left out deliberately — bcrypt is universally
+  available and sufficient here (the earlier 32-bit Alpine/ARM concern no
+  longer applies, so Argon2id is an option if wanted later).
 - **Sessions:** native PHP sessions to start, file-backed on a persisted
   Docker volume so a container restart doesn't drop active sessions. This is
   fine as long as there's a single app instance (true for a personal-project
@@ -301,16 +306,10 @@ Implementation-level additions:
   only if build time on the Pi's own limited CPU becomes painful enough to
   justify building images elsewhere and pulling instead.
 - **Migrations at deploy time:** *not* `docker compose exec app vendor/bin/phinx`
-  — Phinx isn't in the runtime image and wouldn't run on 32-bit anyway (see
-  Migrations, above). Run them from a 64-bit box against the Pi's MariaDB
-  over an SSH tunnel:
-  ```
-  ssh -f -N -L 13306:127.0.0.1:3306 <pi>
-  # local .env with DB_HOST=127.0.0.1, DB_PORT=13306, prod DB_DATABASE/USER/PASSWORD
-  vendor/bin/phinx migrate -e production
-  ```
-  The Pi's MariaDB runs on the host (not in Docker) and listens on
-  `0.0.0.0:3306`; the tunnel avoids exposing it more widely.
+  — Phinx isn't in the runtime image (see Migrations, above). Run
+  `docker compose run --rm migrate` on the Pi: it builds the Dockerfile's
+  `migrate` target (dev deps included), mounts `.env` read-only, and reaches
+  the host's MariaDB via `host.docker.internal`.
 - **Server-local compose override:** `docker-compose.override.yml` on the Pi
   (untracked) drops the dev `./:/app` bind mount so the container runs the
   image-baked code + `vendor` + www-data-owned `storage` (otherwise the
