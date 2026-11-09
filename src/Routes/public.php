@@ -3,6 +3,7 @@
 declare(strict_types=1);
 
 use App\Auth\SessionAuth;
+use App\Http\BotDetector;
 use App\Http\CrawlerAudience;
 use App\Http\MetaDescription;
 use App\Http\RecipeJsonLd;
@@ -127,12 +128,16 @@ return function (App $app): void {
             return Twig::fromRequest($request)->render($response->withStatus(404), 'not_found.twig');
         }
 
-        // In-house popularity metric (admin at /admin/metrics). Skip bots
-        // and the admin's own review passes so the count reflects reader
-        // interest, not crawler noise.
-        if (!SessionAuth::isAdmin()
-            && !CrawlerAudience::isMachine($request->getHeaderLine('User-Agent'))) {
-            $container->get(RecipeViewRepository::class)->record((int) $recipe['id']);
+        // In-house popularity metric (admin at /admin/metrics). Skip the
+        // admin's own review passes; bots are recorded but flagged is_bot
+        // so the metrics exclude them while the raw data stays queryable.
+        if (!SessionAuth::isAdmin()) {
+            $userAgent = $request->getHeaderLine('User-Agent');
+            $container->get(RecipeViewRepository::class)->record(
+                (int) $recipe['id'],
+                $userAgent,
+                BotDetector::isBot($userAgent),
+            );
         }
 
         $story = $recipe['story_id'] !== null ? $stories->findById((int) $recipe['story_id']) : null;

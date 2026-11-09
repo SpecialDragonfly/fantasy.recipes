@@ -6,7 +6,7 @@
     <section class="panel">
         <h1>Metrics</h1>
         <p><small>First-party only. Nothing here is sent to a third party.
-        Recipe views exclude bots and your own admin views.</small></p>
+        Recipe views exclude bots and your own admin views; the daily table lists bot views separately.</small></p>
 
         <h2>Popular recipes</h2>
         {% if top_recipes|length %}
@@ -42,6 +42,7 @@
                     <tr>
                         <th>Day</th>
                         <th>Views</th>
+                        <th>Bots</th>
                     </tr>
                 </thead>
                 <tbody>
@@ -49,6 +50,7 @@
                         <tr>
                             <td>{{ row.day }}</td>
                             <td>{{ row.views }}</td>
+                            <td>{{ row.bots }}</td>
                         </tr>
                     {% endfor %}
                 </tbody>

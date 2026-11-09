@@ -155,6 +155,8 @@ final class InMemoryDatabase
                 id INTEGER PRIMARY KEY AUTOINCREMENT,
                 recipe_id INTEGER NOT NULL,
                 viewed_at DATETIME NOT NULL,
+                user_agent VARCHAR(255) NULL,
+                is_bot TINYINT(1) NOT NULL DEFAULT 0,
                 FOREIGN KEY (recipe_id) REFERENCES recipes(id) ON DELETE CASCADE
             )',
         );

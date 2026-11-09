@@ -46,6 +46,34 @@ final class RecipeViewRepositoryTest extends TestCase
         );
     }
 
+    public function testRecordStoresUserAgentAndBotFlag(): void
+    {
+        $this->repo->record($this->stew, 'Mozilla/5.0 Test', false);
+        $this->repo->record($this->stew, str_repeat('x', 400), true);
+
+        $result = $this->pdo->query('SELECT user_agent, is_bot FROM recipe_views ORDER BY id');
+        self::assertNotFalse($result);
+        $rows = $result->fetchAll();
+        self::assertSame('Mozilla/5.0 Test', $rows[0]['user_agent']);
+        self::assertSame(0, (int) $rows[0]['is_bot']);
+        self::assertSame(255, strlen((string) $rows[1]['user_agent']));
+        self::assertSame(1, (int) $rows[1]['is_bot']);
+    }
+
+    public function testMetricsExcludeBotViews(): void
+    {
+        $this->repo->record($this->stew, 'Mozilla/5.0', false);
+        $this->repo->record($this->stew, 'Googlebot', true);
+        $this->repo->record($this->pie, 'Googlebot', true);
+
+        $day = $this->repo->dailyTotals(7)[0];
+        self::assertSame(1, $day['views']);
+        self::assertSame(2, $day['bots']);
+        $top = $this->repo->topRecipes(50);
+        self::assertCount(1, $top);
+        self::assertSame(1, $top[0]['views_all']);
+    }
+
     public function testDailyTotalsGroupsAllRecipesByDayNewestFirst(): void
     {
         $today = (new DateTimeImmutable())->format('Y-m-d');
@@ -59,7 +87,7 @@ final class RecipeViewRepositoryTest extends TestCase
         $totals = $this->repo->dailyTotals(90);
 
         self::assertSame(
-            [['day' => $today, 'views' => 3], ['day' => $yesterday, 'views' => 1]],
+            [['day' => $today, 'views' => 3, 'bots' => 0], ['day' => $yesterday, 'views' => 1, 'bots' => 0]],
             $totals,
         );
     }
